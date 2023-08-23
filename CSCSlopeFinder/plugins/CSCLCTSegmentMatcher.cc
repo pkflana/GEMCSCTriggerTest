@@ -39,6 +39,8 @@
 #include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h"
+#include "DataFormats/GEMDigi/interface/GEMPadDigiClusterCollection.h"
+#include "DataFormats/GEMDigi/interface/GEMPadDigiCluster.h"
 #include "DataFormats/GEMRecHit/interface/GEMRecHitCollection.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 
@@ -85,6 +87,7 @@ struct SegmentLCTData
 
   //============ LCT Info =================//
   float LCT_slope; int LCT_quality; float LCT_strip;
+  int LCT_bend;
   int LCT_ME11_endcap; int LCT_ME11_station;
   int LCT_ME11_ring; int LCT_ME11_chamber;
 
@@ -109,6 +112,8 @@ struct SegmentLCTData
   int SegmentHit_GE11_endcap; int SegmentHit_GE11_station;
   int SegmentHit_GE11_ring; int SegmentHit_GE11_chamber;
   int SegmentHit_GE11_layer; int SegmentHit_GE11_eta;
+  vector<int> SegmentHit_DigiCluster_Pads; vector<int> SegmentHit_DigiCluster_BX;
+  int SegmentHit_DigiCluster_BestPad; int SegmentHit_DigiCluster_BestBX;
 
   //============ Track Hit Info ===========//
   float TrackHit_GP_x; float TrackHit_GP_y; float TrackHit_GP_z;
@@ -143,6 +148,7 @@ void SegmentLCTData::init()
 
   //============ LCT Info =================//
   LCT_slope = value; LCT_quality = value; LCT_strip = value;
+  LCT_bend = value;
   LCT_ME11_endcap = value; LCT_ME11_station = value;
   LCT_ME11_ring = value; LCT_ME11_chamber = value;
 
@@ -167,6 +173,8 @@ void SegmentLCTData::init()
   SegmentHit_GE11_endcap = value; SegmentHit_GE11_station = value;
   SegmentHit_GE11_ring = value; SegmentHit_GE11_chamber = value;
   SegmentHit_GE11_layer = value; SegmentHit_GE11_eta = value;
+  SegmentHit_DigiCluster_Pads.clear(); SegmentHit_DigiCluster_BX.clear();
+  SegmentHit_DigiCluster_BestPad = value; SegmentHit_DigiCluster_BestBX = value;
 
   //============ Track Hit Info ===========//
   TrackHit_GP_x = value; TrackHit_GP_y = value; TrackHit_GP_z = value;
@@ -201,6 +209,7 @@ TTree* SegmentLCTData::book(TTree *t){
 
   //============ LCT Info =================//
   t->Branch("LCT_slope", &LCT_slope); t->Branch("LCT_quality", &LCT_quality); t->Branch("LCT_strip", &LCT_strip);
+  t->Branch("LCT_bend", &LCT_bend);
   t->Branch("LCT_ME11_endcap", &LCT_ME11_endcap); t->Branch("LCT_ME11_station", &LCT_ME11_station);
   t->Branch("LCT_ME11_ring", &LCT_ME11_ring); t->Branch("LCT_ME11_chamber", &LCT_ME11_chamber);
 
@@ -225,6 +234,8 @@ TTree* SegmentLCTData::book(TTree *t){
   t->Branch("SegmentHit_GE11_endcap", &SegmentHit_GE11_endcap); t->Branch("SegmentHit_GE11_station", &SegmentHit_GE11_station);
   t->Branch("SegmentHit_GE11_ring", &SegmentHit_GE11_ring); t->Branch("SegmentHit_GE11_chamber", &SegmentHit_GE11_chamber);
   t->Branch("SegmentHit_GE11_layer", &SegmentHit_GE11_layer); t->Branch("SegmentHit_GE11_eta", &SegmentHit_GE11_eta);
+  t->Branch("SegmentHit_DigiCluster_Pads", &SegmentHit_DigiCluster_Pads); t->Branch("SegmentHit_DigiCluster_BX", &SegmentHit_DigiCluster_BX);
+  t->Branch("SegmentHit_DigiCluster_BestPad", &SegmentHit_DigiCluster_BestPad); t->Branch("SegmentHit_DigiCluster_BestBX", &SegmentHit_DigiCluster_BestBX);
 
   //============ Track Hit Info ===========//
   t->Branch("TrackHit_GP_x", &TrackHit_GP_x); t->Branch("TrackHit_GP_y", &TrackHit_GP_y); t->Branch("TrackHit_GP_z", &TrackHit_GP_z);
@@ -250,6 +261,7 @@ private:
 
 
   edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> co_token;
+  edm::EDGetTokenT<GEMPadDigiClusterCollection> gemdigi_token;
 
   edm::EDGetTokenT<GEMRecHitCollection> gemRecHits_;
   edm::Handle<GEMRecHitCollection> gemRecHits;
@@ -296,8 +308,7 @@ CSCLCTSegmentMatcher::CSCLCTSegmentMatcher(const edm::ParameterSet& iConfig)
   gemRecHits_ = consumes<GEMRecHitCollection>(iConfig.getParameter<edm::InputTag>("gemRecHits"));
   cscSegments_ = consumes<CSCSegmentCollection>(edm::InputTag("cscSegments"));
   co_token = consumes<CSCCorrelatedLCTDigiCollection>(iConfig.getParameter<edm::InputTag>("corrlctDigiTag"));
-  //cscCorrLCTs_ = consumes<CSCCorrelatedLCTDigiCollection>(edm::InputTag("cscCorrLCTs"));
-
+  gemdigi_token = consumes<GEMPadDigiClusterCollection>(iConfig.getParameter<edm::InputTag>("gemPadDigiCluster"));
 
   debug = iConfig.getParameter<bool>("debug");
   std::cout << "debug " << debug << std::endl;
@@ -324,6 +335,8 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   edm::Handle<View<reco::Muon> > muons;
   edm::Handle<CSCCorrelatedLCTDigiCollection> correlatedlcts;
   iEvent.getByToken(co_token, correlatedlcts);
+  edm::Handle<GEMPadDigiClusterCollection> gemPadDigis;
+  iEvent.getByToken(gemdigi_token, gemPadDigis);
 
   if (debug) cout << "New! EventNumber = " << iEvent.eventAuxiliary().event() << " LumiBlock = " << iEvent.eventAuxiliary().luminosityBlock() << " RunNumber = " << iEvent.run() << endl;
   if (! iEvent.getByToken(muons_, muons)) return;
@@ -333,7 +346,7 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
   edm::Handle<CSCSegmentCollection> cscSegments;
   if (! iEvent.getByToken(cscSegments_, cscSegments)){std::cout << "Bad segments" << std::endl;}
 
-  cout << "New Event" << endl;
+  if (debug) cout << "New Event" << endl;
 
 
   for (size_t i = 0; i < muons->size(); ++i){
@@ -352,19 +365,29 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       //The tree fill will happen at this level (segment level), lets initialize our variables
       data_.init();
       const CSCSegment* ME11_segment;
-      TrajectoryStateOnSurface TSOS_Segment;
-      TrajectoryStateOnSurface TSOS_Track;
+      GlobalPoint TSOS_Segment_GP;
+      LocalPoint TSOS_Segment_LP;
+      LocalVector TSOS_Segment_LocalDir;
+      GlobalPoint TSOS_Track_GP;
+      LocalPoint TSOS_Track_LP;
+      LocalVector TSOS_Track_LocalDir;
       CSCCorrelatedLCTDigi LCTDigiMatch;
       CSCDetId SegmentCSCDetId;
       CSCDetId TrackCSCDetId;
       CSCDetId LCTDetId;
-      TrajectoryStateOnSurface TSOS_Segment_On_GEM;
-      TrajectoryStateOnSurface TSOS_Track_On_GEM;
-      GEMRecHit GEM_Hit_Match_Segment;
-      GEMRecHit GEM_Hit_Match_Track;
+      GlobalPoint TSOS_Segment_On_GEM_GP;
+      LocalPoint TSOS_Segment_On_GEM_LP;
+      GlobalPoint TSOS_Track_On_GEM_GP;
+      LocalPoint TSOS_Track_On_GEM_LP;
+      GlobalPoint GEM_Hit_Match_Segment_GP;
+      LocalPoint GEM_Hit_Match_Segment_LP;
+      GlobalPoint GEM_Hit_Match_Track_GP;
+      LocalPoint GEM_Hit_Match_Track_LP;
       GEMDetId SegmentGEMDetId;
       GEMDetId TrackGEMDetId;
-      
+      vector<int> best_clusterPads;
+      vector<int> best_clsuterBXs;
+      bool good_event = false;
 
       const TrackingRecHit* RecHit = (Track->recHit(RecHit_iter)).get();
       DetId RecHitId = RecHit->geographicalId();
@@ -406,11 +429,10 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         std::vector<CSCCorrelatedLCTDigi>::const_iterator digiItr = (*j).second.first;
         std::vector<CSCCorrelatedLCTDigi>::const_iterator last = (*j).second.second;
         //Pick the best LCT Digi to match the segment
-        cout << "nope ):" << endl;
         for (; digiItr != last; ++digiItr){
-          float SegmentStrip = ME11_layer_geo->nearestStrip(ME11_segment->localPosition());
+          //float SegmentStrip = ME11_layer_geo->nearestStrip(ME11_segment->localPosition());
           float SegmentFracStrip = ME11_layer_geo->strip(ME11_segment->localPosition());
-          const float TrackStrip = ME11_layer_geo->nearestStrip(track_at_segment_LP);
+          //const float TrackStrip = ME11_layer_geo->nearestStrip(track_at_segment_LP);
           const float TrackFracStrip = ME11_layer_geo->strip(track_at_segment_LP);
           if (debug)  cout << "SegStrip:TrackStrip:LCTStrip Frac -- " << SegmentFracStrip << ":" << TrackFracStrip << ":" << digiItr->getFractionalStrip() << endl;
 
@@ -419,6 +441,7 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         }
         //Found the best DigiItr, now lets work on propagating to GEM
         //Set Up Segment Propagation
+        bool good_segment_prop = false;
         DetId segDetId = ME11_segment->geographicalId();
         const GeomDet* segDet = theTrackingGeometry->idToDet(segDetId());
         LocalVector momentum_at_surface = (Track->outerP()) * (ME11_segment->localDirection());
@@ -427,76 +450,186 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         mat = ME11_segment->parametersError().similarityT(ME11_segment->projectionMatrix());
         LocalTrajectoryError error(asSMatrix<5>(mat));
         TrajectoryStateOnSurface TSOS_Segment(param, error, segDet->surface(), &*theService_->magneticField());
+        TSOS_Segment_GP = TSOS_Segment.globalPosition();
+        TSOS_Segment_LP = TSOS_Segment.localPosition();
+        TSOS_Segment_LocalDir = TSOS_Segment.localDirection();
 
         //Set Up Track Propagation
-        TSOS_Track = track_at_segment;
+        bool good_track_prop = false;
+        TrajectoryStateOnSurface TSOS_Track = track_at_segment;
+        TSOS_Track_GP = TSOS_Track.globalPosition();
+        TSOS_Track_LP = TSOS_Track.localPosition();
+        TSOS_Track_LocalDir = TSOS_Track.localDirection();
+
+        if (debug) cout << "TSOS SEG LP : TSOS TRA LP" << TSOS_Segment_LP << ":" << TSOS_Track_LP << endl;
+        if (debug) cout << "TSOS SEG GP : TSOS TRA GP" << TSOS_Segment_GP << ":" << TSOS_Track_GP << endl;
 
         auto propagator = theService_->propagator("SteppingHelixPropagatorAny");
         for (const auto& ch : GEMGeometry_->etaPartitions()){
           if (ch->id().station() != 1) continue; //Only GE1/1
           const BoundPlane& bps(ch->surface());
 
-          TSOS_Segment_On_GEM = propagator->propagate(track_at_segment, ch->surface());
+          TrajectoryStateOnSurface TSOS_Segment_On_GEM = propagator->propagate(TSOS_Segment, ch->surface());
           if (TSOS_Segment_On_GEM.isValid()){
-            SegmentGEMDetId = ch->id();
             const GlobalPoint Prop_GEM_GP = TSOS_Segment_On_GEM.globalPosition();
-            const LocalPoint Prop_GEM_LP = ch->toLocal(Prop_GEM_GP);
+            const LocalPoint Prop_GEM_LP = TSOS_Segment_On_GEM.localPosition();
             const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
+
             if (((TSOS_Segment.globalPosition().z() * Prop_GEM_GP.z()) > 0) and (bps.bounds().inside(Prop_GEM_LP_2D)) and (ch->id().station() == 1 and ch->id().ring() == 1)){
-              cout << "Found a good track prop" << endl;
+              SegmentGEMDetId = ch->id();
+              TSOS_Segment_On_GEM_GP = TSOS_Segment_On_GEM.globalPosition();
+              TSOS_Segment_On_GEM_LP = TSOS_Segment_On_GEM.localPosition();
+              if (debug) cout << "TSOS Segment On GEM GP:LP " << TSOS_Segment_On_GEM_GP << ":" << TSOS_Segment_On_GEM_LP << endl;
+              if (debug) cout << "Found a good segment prop" << endl;
 
               float tmp_delta_x = 999.9;
               for (auto hit = gemRecHits->begin(); hit != gemRecHits->end(); hit++){
                 GEMDetId gemid((hit)->geographicalId());
                 if (!(gemid.det() == DetId::Detector::Muon && gemid.subdetId() == MuonSubdetId::GEM)) continue;
                 if (!(gemid.station() == ch->id().station() and gemid.chamber() == ch->id().chamber() and gemid.layer() == ch->id().layer() and abs(gemid.roll() - ch->id().roll()) <= 1 and gemid.region() == ch->id().region())) continue;
+                if (!(((SegmentCSCDetId.endcap() == 2 and gemid.region() == -1) or (SegmentCSCDetId.endcap() == 1 and gemid.region() == 1)) and SegmentCSCDetId.station() == gemid.station() and SegmentCSCDetId.ring() == gemid.ring() and SegmentCSCDetId.chamber() == gemid.chamber())) continue;
+                good_segment_prop = true;
                 float new_delta_x = abs(hit->localPosition().x() - ch->toLocal(TSOS_Segment_On_GEM.globalPosition()).x());
                 if (not (new_delta_x < tmp_delta_x)) continue;
                 tmp_delta_x = new_delta_x;
-                GEM_Hit_Match_Segment = *hit;
+                const auto& etaPart = GEMGeometry_->etaPartition(gemid);
+                GEM_Hit_Match_Segment_GP = etaPart->toGlobal(hit->localPosition());
+                GEM_Hit_Match_Segment_LP = hit->localPosition();
+
+                //We have a GEM Hit! Lets get its strip and start the process of finding the cluster it came from
+                cout << "BunchX, firstClustStrip, clusterSize " << hit->BunchX() << " " << hit->firstClusterStrip() << " " << hit->clusterSize() << endl;
+                data_.SegmentHit_DigiCluster_Pads.clear(); data_.SegmentHit_DigiCluster_BX.clear();
+                for (GEMPadDigiClusterCollection::DigiRangeIterator j = gemPadDigis->begin(); j != gemPadDigis->end(); j++){
+                  if ((*j).first != gemid) continue;
+                  if (debug) cout << "Digi chamber! " << (*j).first << " and gemhit on " << gemid << endl;
+                  std::vector<GEMPadDigiCluster>::const_iterator digiItr = (*j).second.first;
+                  std::vector<GEMPadDigiCluster>::const_iterator last = (*j).second.second;
+                  for (; digiItr != last; ++digiItr) {
+                    for (int pad: digiItr->pads()){
+                      data_.SegmentHit_DigiCluster_Pads.push_back(pad); data_.SegmentHit_DigiCluster_BX.push_back(digiItr->bx());
+                      if (debug) cout << "Pad:BX  " << pad << ":" << digiItr->bx() << " ";
+                      if (pad == int((hit->firstClusterStrip()/2.0))){
+                        data_.SegmentHit_DigiCluster_BestPad = pad; data_.SegmentHit_DigiCluster_BestBX = digiItr->bx();
+                        if (debug) cout << "    THIS IS THE MATCH" << endl;
+                      }
+                    }
+                    cout << endl;
+                  }
+                }
               }
             }
           }
-          TSOS_Track_On_GEM = propagator->propagate(TSOS_Track, ch->surface());
+          TrajectoryStateOnSurface TSOS_Track_On_GEM = propagator->propagate(TSOS_Track, ch->surface());
           if (TSOS_Track_On_GEM.isValid()){
-            TrackGEMDetId = ch->id();
             const GlobalPoint Prop_GEM_GP = TSOS_Track_On_GEM.globalPosition();
-            const LocalPoint Prop_GEM_LP = ch->toLocal(Prop_GEM_GP);
+            const LocalPoint Prop_GEM_LP =TSOS_Track_On_GEM.localPosition();
             const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
-            if (((TSOS_Segment.globalPosition().z() * Prop_GEM_GP.z()) > 0) and (bps.bounds().inside(Prop_GEM_LP_2D)) and (ch->id().station() == 1 and ch->id().ring() == 1)){
-              cout << "Found a good segment prop" << endl;
+            if (((TSOS_Track.globalPosition().z() * Prop_GEM_GP.z()) > 0) and (bps.bounds().inside(Prop_GEM_LP_2D)) and (ch->id().station() == 1 and ch->id().ring() == 1)){
+              TrackGEMDetId = ch->id();
+              TSOS_Track_On_GEM_GP = TSOS_Track_On_GEM.globalPosition();
+              TSOS_Track_On_GEM_LP = TSOS_Track_On_GEM.localPosition();
+              if (debug) cout << "Found a good track prop" << endl;
 
               float tmp_delta_x = 999.9;
               for (auto hit = gemRecHits->begin(); hit != gemRecHits->end(); hit++){
                 GEMDetId gemid((hit)->geographicalId());
                 if (!(gemid.det() == DetId::Detector::Muon && gemid.subdetId() == MuonSubdetId::GEM)) continue;
                 if (!(gemid.station() == ch->id().station() and gemid.chamber() == ch->id().chamber() and gemid.layer() == ch->id().layer() and abs(gemid.roll() - ch->id().roll()) <= 1 and gemid.region() == ch->id().region())) continue;
+                if (!(((SegmentCSCDetId.endcap() == 2 and gemid.region() == -1) or (SegmentCSCDetId.endcap() == 1 and gemid.region() == 1)) and SegmentCSCDetId.station() == gemid.station() and SegmentCSCDetId.ring() == gemid.ring() and SegmentCSCDetId.chamber() == gemid.chamber())) continue;
+                good_track_prop = true;
                 float new_delta_x = abs(hit->localPosition().x() - ch->toLocal(TSOS_Track_On_GEM.globalPosition()).x());
                 if (not (new_delta_x < tmp_delta_x)) continue;
                 tmp_delta_x = new_delta_x;
-                GEM_Hit_Match_Track = *hit;
+                const auto& etaPart = GEMGeometry_->etaPartition(gemid);
+                GEM_Hit_Match_Track_GP = etaPart->toGlobal(hit->localPosition());
+                GEM_Hit_Match_Track_LP = hit->localPosition();
               }
             }
           }
+          if (good_segment_prop and good_track_prop) good_event = true;
         }
       }
       //This is where the fill will happen
       /*
-      const CSCSegment* ME11_segment;
-      TrajectoryStateOnSurface TSOS_Segment;
-      TrajectoryStateOnSurface TSOS_Track;
-      CSCCorrelatedLCTDigi LCTDigiMatch;
-      CSCDetId SegmentCSCDetId;
-      CSCDetId TrackCSCDetId;
-      CSCDetId LCTDetId;
-      TrajectoryStateOnSurface TSOS_Segment_On_GEM;
-      TrajectoryStateOnSurface TSOS_Track_On_GEM;
-      GEMRecHit GEM_Hit_Match_Segment;
-      GEMRecHit GEM_Hit_Match_Track;
+      const CSCSegment* ME11_segment; done
+      GlobalPoint TSOS_Segment_GP; done
+      LocalPoint TSOS_Segment_LP; done
+      LocalVector TSOS_Segment_LocalDir; done
+      GlobalPoint TSOS_Track_GP; done
+      LocalPoint TSOS_Track_LP; done
+      LocalVector TSOS_Track_LocalDir; done
+      CSCCorrelatedLCTDigi LCTDigiMatch; done
+      CSCDetId SegmentCSCDetId; done
+      CSCDetId TrackCSCDetId; done
+      CSCDetId LCTDetId; done
+      GlobalPoint TSOS_Segment_On_GEM_GP; done
+      LocalPoint TSOS_Segment_On_GEM_LP; done
+      GlobalPoint TSOS_Track_On_GEM_GP;
+      LocalPoint TSOS_Track_On_GEM_LP;
+      GlobalPoint GEM_Hit_Match_Segment_GP;
+      LocalPoint GEM_Hit_Match_Segment_LP;
+      GlobalPoint GEM_Hit_Match_Track_GP;
+      LocalPoint GEM_Hit_Match_Track_LP;
       GEMDetId SegmentGEMDetId;
       GEMDetId TrackGEMDetId;
       */
-      tree->Fill();
+
+
+      //============ Muon Info ================//
+      data_.muon_charge = mu->charge(); data_.muon_pt = mu->pt(); data_.muon_eta = mu->eta();
+      data_.evtNum = iEvent.eventAuxiliary().event(); data_.lumiBlock = iEvent.eventAuxiliary().luminosityBlock(); data_.runNum = iEvent.run();
+
+      //============ Segment Info =============//
+      data_.Segment_GP_x = TSOS_Segment_GP.x(); data_.Segment_GP_y = TSOS_Segment_GP.y(); data_.Segment_GP_z = TSOS_Segment_GP.z();
+      data_.Segment_LP_x = TSOS_Segment_LP.x(); data_.Segment_LP_y = TSOS_Segment_LP.y(); data_.Segment_LP_z = TSOS_Segment_LP.z();
+      data_.Segment_slope_angle = asin(TSOS_Segment_LocalDir.x() / TSOS_Segment_LocalDir.z());
+      data_.Segment_ME11_endcap = SegmentCSCDetId.endcap(); data_.Segment_ME11_station = SegmentCSCDetId.station();
+      data_.Segment_ME11_ring = SegmentCSCDetId.ring(); data_.Segment_ME11_chamber = SegmentCSCDetId.chamber();
+
+      //============ Track Info ===============//
+      data_.Track_GP_x = TSOS_Track_GP.x(); data_.Track_GP_y = TSOS_Track_GP.y(); data_.Track_GP_z = TSOS_Track_GP.z();
+      data_.Track_LP_x = TSOS_Track_LP.x(); data_.Track_LP_y = TSOS_Track_LP.y(); data_.Track_LP_z = TSOS_Track_LP.z();
+      data_.Track_slope_angle = asin(TSOS_Track_LocalDir.x() / TSOS_Track_LocalDir.y()); //For track some reason y() is actually z()
+      data_.Track_ME11_endcap = TrackCSCDetId.endcap(); data_.Track_ME11_station = TrackCSCDetId.station();
+      data_.Track_ME11_ring = TrackCSCDetId.ring(); data_.Track_ME11_chamber = TrackCSCDetId.chamber();
+
+      //============ LCT Info =================//
+      data_.LCT_slope = LCTDigiMatch.getSlope(); data_.LCT_quality = LCTDigiMatch.getQuality(); data_.LCT_strip = LCTDigiMatch.getFractionalStrip();
+      data_.LCT_bend = LCTDigiMatch.getBend();
+      data_.LCT_ME11_endcap = LCTDetId.endcap(); data_.LCT_ME11_station = LCTDetId.station();
+      data_.LCT_ME11_ring = LCTDetId.ring(); data_.LCT_ME11_chamber = LCTDetId.chamber();
+
+      //============ Segment Prop Info ========//
+      data_.SegmentProp_GP_x = TSOS_Segment_On_GEM_GP.x(); data_.SegmentProp_GP_y = TSOS_Segment_On_GEM_GP.y(); data_.SegmentProp_GP_z = TSOS_Segment_On_GEM_GP.z();
+      data_.SegmentProp_LP_x = TSOS_Segment_On_GEM_LP.x(); data_.SegmentProp_LP_y = TSOS_Segment_On_GEM_LP.y(); data_.SegmentProp_LP_z = TSOS_Segment_On_GEM_LP.z();
+      data_.SegmentProp_GE11_endcap = SegmentGEMDetId.region(); data_.SegmentProp_GE11_station = SegmentGEMDetId.station();
+      data_.SegmentProp_GE11_ring = SegmentGEMDetId.ring(); data_.SegmentProp_GE11_chamber = SegmentGEMDetId.chamber();
+      data_.SegmentProp_GE11_layer = SegmentGEMDetId.layer(); data_.SegmentProp_GE11_eta = SegmentGEMDetId.roll();
+
+      //============ Track Prop Info ==========//
+      data_.TrackProp_GP_x = TSOS_Track_On_GEM_GP.x(); data_.TrackProp_GP_y = TSOS_Track_On_GEM_GP.y(); data_.TrackProp_GP_z = TSOS_Track_On_GEM_GP.z();
+      data_.TrackProp_LP_x = TSOS_Track_On_GEM_LP.x(); data_.TrackProp_LP_y = TSOS_Track_On_GEM_LP.y(); data_.TrackProp_LP_z = TSOS_Track_On_GEM_LP.z();
+      data_.TrackProp_GE11_endcap = TrackGEMDetId.region(); data_.TrackProp_GE11_station = TrackGEMDetId.station();
+      data_.TrackProp_GE11_ring = TrackGEMDetId.ring(); data_.TrackProp_GE11_chamber = TrackGEMDetId.chamber();
+      data_.TrackProp_GE11_layer = TrackGEMDetId.layer(); data_.TrackProp_GE11_eta = TrackGEMDetId.roll();
+
+      //============ Segment Hit Info =========//
+      data_.SegmentHit_GP_x = GEM_Hit_Match_Segment_GP.x(); data_.SegmentHit_GP_y = GEM_Hit_Match_Segment_GP.y(); data_.SegmentHit_GP_z = GEM_Hit_Match_Segment_GP.z();
+      data_.SegmentHit_LP_x = GEM_Hit_Match_Segment_LP.x(); data_.SegmentHit_LP_y = GEM_Hit_Match_Segment_LP.y(); data_.SegmentHit_LP_z = GEM_Hit_Match_Segment_LP.z();
+      //SegmentHit_residual = value;
+      data_.SegmentHit_GE11_endcap = SegmentGEMDetId.region(); data_.SegmentHit_GE11_station = SegmentGEMDetId.station();
+      data_.SegmentHit_GE11_ring = SegmentGEMDetId.ring(); data_.SegmentHit_GE11_chamber = SegmentGEMDetId.chamber();
+      data_.SegmentHit_GE11_layer = SegmentGEMDetId.layer(); data_.SegmentHit_GE11_eta = SegmentGEMDetId.roll();
+
+      //============ Track Hit Info ===========//
+      data_.TrackHit_GP_x = GEM_Hit_Match_Track_GP.x(); data_.TrackHit_GP_y = GEM_Hit_Match_Track_GP.y(); data_.TrackHit_GP_z = GEM_Hit_Match_Track_GP.z();
+      data_.TrackHit_LP_x = GEM_Hit_Match_Track_LP.x(); data_.TrackHit_LP_y = GEM_Hit_Match_Track_LP.y(); data_.TrackHit_LP_z = GEM_Hit_Match_Track_LP.z();
+      //TrackHit_residual = value;
+      data_.TrackHit_GE11_endcap = TrackGEMDetId.region(); data_.TrackHit_GE11_station = TrackGEMDetId.station();
+      data_.TrackHit_GE11_ring = TrackGEMDetId.ring(); data_.TrackHit_GE11_chamber = TrackGEMDetId.chamber();
+      data_.TrackHit_GE11_layer = TrackGEMDetId.layer(); data_.TrackHit_GE11_eta = TrackGEMDetId.roll();
+
+      if (good_event) tree->Fill();
     }
   }
 }

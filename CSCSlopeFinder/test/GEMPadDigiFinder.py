@@ -48,7 +48,7 @@ process.source = cms.Source("PoolSource",
 			)
 				)
 
-outfile = "out_LCT_test.root"
+outfile = "out_GEM_test.root"
 process.source.fileNames.append("file:lcts2.root")
 
 process.options = cms.untracked.PSet(
@@ -57,14 +57,14 @@ process.options = cms.untracked.PSet(
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
 
-process.CSCLCTSegmentMatcher = cms.EDAnalyzer('CSCLCTSegmentMatcher', 
+process.GEMPadDigiFinder = cms.EDAnalyzer('GEMPadDigiFinder', 
 	process.MuonServiceProxy,
 	gemRecHits = cms.InputTag("gemRecHits"), 
         muons = cms.InputTag("muons"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
 	vertexCollection = cms.InputTag("offlinePrimaryVertices"),
-        debug = cms.bool(True),
+        debug = cms.bool(False),
 )
 
-process.p = cms.Path(process.CSCLCTSegmentMatcher)
+process.p = cms.Path(process.GEMPadDigiFinder)
