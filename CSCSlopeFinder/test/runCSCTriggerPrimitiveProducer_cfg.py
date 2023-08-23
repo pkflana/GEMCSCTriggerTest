@@ -12,7 +12,7 @@ options.register("maskedChambers", "", VarParsing.multiplicity.list, VarParsing.
                  "Chambers you want to explicitly mask.")
 options.register("selectedChambers", "", VarParsing.multiplicity.list, VarParsing.varType.string,
                  "Chambers you want to explicitly mask.")
-options.register("unpackGEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("unpackGEM", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to unpack the GEM DAQ data.")
 options.register("l1", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to re-emulate the CSC trigger primitives.")
@@ -40,7 +40,7 @@ options.register('useB904GE11Short',False,VarParsing.multiplicity.singleton,VarP
                  "Set to True when using data from GE1/1 Short super chamber in B904.")
 options.register('useB904GE11Long',False,VarParsing.multiplicity.singleton,VarParsing.varType.bool,
                  "Set to True when using data from GE1/1 Long super chamber in B904.")
-options.register("run3", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("run3", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using Run-3 data.")
 options.register("runCCLUTOTMB", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using the CCLUT OTMB algorithm.")
@@ -110,7 +110,8 @@ if options.mc:
 else:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
       if options.run3:
-            process.GlobalTag = GlobalTag(process.GlobalTag, '112X_dataRun3_Prompt_v5', '')
+            #process.GlobalTag = GlobalTag(process.GlobalTag, '112X_dataRun3_Prompt_v5', '')
+            process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
 
 ## running on unpacked data, or after running the unpacker
 if not options.mc or options.unpack:
