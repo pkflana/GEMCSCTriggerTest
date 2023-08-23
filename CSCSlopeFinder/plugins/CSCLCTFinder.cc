@@ -2,7 +2,9 @@
 #include <memory>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <string>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -135,6 +137,16 @@ private:
   const edm::ESGetToken<CSCGeometry, MuonGeometryRecord> cscGeomToken_;
   const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> ttkToken_;
   const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> geomToken_;
+
+  map<int, int> SlopeExtrapolationME11aEvenL1_Map;
+  map<int, int> SlopeExtrapolationME11bEvenL1_Map;
+  map<int, int> SlopeExtrapolationME11aOddL1_Map;
+  map<int, int> SlopeExtrapolationME11bOddL1_Map;
+
+  map<int, int> SlopeExtrapolationME11aEvenL2_Map;
+  map<int, int> SlopeExtrapolationME11bEvenL2_Map;
+  map<int, int> SlopeExtrapolationME11aOddL2_Map;
+  map<int, int> SlopeExtrapolationME11bOddL2_Map;
 };
 
 
@@ -191,28 +203,12 @@ CSCLCTFinder::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
   edm::Handle<CSCSegmentCollection> cscSegments;
   if (! iEvent.getByToken(cscSegments_, cscSegments)){std::cout << "Bad segments" << std::endl;}
 
-  /*
-  //Lets loop over all ME1/1 chambers? :D
-  for (const auto& ch : CSCGeometry_->layers()) {
-    if (!(ch->id().station() == 1 and (ch->id().ring() == 1 or ch->id().ring() == 4))) continue;
-    cout << "At new ME1/1! Lets print out the info" << endl;
-    auto chID = ch->id();
-    cout << chID.endcap() << chID.station() << chID.ring() << chID.chamber() << chID.layer() << endl;
-  }
-  */
-
-  /*
-  for(CSCCorrelatedLCTDigiCollection::const_iterator cscCorrLCT = cscCorrLCTs->begin(); cscCorrLCT != cscCorrLCTs->end(); cscCorrLCT++){
-    auto cscDetID = (cscCorrLCT)->getCSCID();
-    cout << "At new LCT " << endl;
-    cout << cscDetID.endcap() << cscDetID.station() << cscDetID.ring() << cscDetID.chamber() << cscDetID.layer() << endl;
-  }
-  */
   //cout << "Starting the corr LCT search" << endl;
   cout << "New Event" << endl;
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
     //cout << "Looping corr lcts" << endl;
     cout << "New Chamber " << (*j).first << endl;
+    if ((*j).first.station() != 1 or (*j).first.ring() != 1) continue;
     std::vector<CSCCorrelatedLCTDigi>::const_iterator digiItr = (*j).second.first;
     std::vector<CSCCorrelatedLCTDigi>::const_iterator last = (*j).second.second;
     for (; digiItr != last; ++digiItr) {
@@ -222,44 +218,170 @@ CSCLCTFinder::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
       cout << "Bend          " << digiItr->getBend() << endl;
       cout << "Run2 Pattern: " << digiItr->getPattern() << endl;
       cout << "Run3 Pattern: " << digiItr->getRun3Pattern() << endl;
+
+      //Lets now try to propagate LCT to GEM through the LUT
+      cout << "We have slope of " << digiItr->getSlope() << " that means we have a slope correction of ";
+      if ((*j).first.chamber()%2 != 0){
+        //Odd chamber
+        if ((*j).first.isME1a()){
+          cout << "Odd A L1: " << SlopeExtrapolationME11aOddL1_Map[digiItr->getSlope()] << " L2: " << SlopeExtrapolationME11aOddL2_Map[digiItr->getSlope()];
+        }
+        if ((*j).first.isME1b()){
+          cout << "Odd B L1: " << SlopeExtrapolationME11bOddL1_Map[digiItr->getSlope()] << " L2: " << SlopeExtrapolationME11bOddL2_Map[digiItr->getSlope()];
+        }
+      }
+      if ((*j).first.chamber()%2 == 0){
+        //Even chamber
+        if ((*j).first.isME1a()){
+          cout << "Even A L1: " << SlopeExtrapolationME11aEvenL1_Map[digiItr->getSlope()] << " L2: " << SlopeExtrapolationME11aEvenL2_Map[digiItr->getSlope()];
+        }
+        if ((*j).first.isME1b()){
+          cout << "Even B L1: " << SlopeExtrapolationME11bEvenL1_Map[digiItr->getSlope()] << " L2: " << SlopeExtrapolationME11bEvenL2_Map[digiItr->getSlope()];
+        }
+      }
+      cout << endl;
     }
   }
-
-  /*
-  for (auto cscCorrLCT = cscCorrLCTs->begin(); cscCorrLCT != cscCorrLCTs->end(); cscCorrLCT++) {
-    cout << "New 'corrLCT'" << endl;
-    auto range = cscCorrLCTs->get((*cscCorrLCT).first);
-      
-    for (auto cluster = range.first; cluster != range.second; cluster++) {
-      cout << "New 'cluster'" << endl;
-      cout << (cluster->isValid()) << endl;
-      cout << cluster->getStrip() << endl;
-      cout << cluster->getSlope() << endl;
-      cout << cluster->getRun3Pattern() << endl;
-      cout << cluster->getCSCID() << endl;
-    }
-  }
-  */
-
-  /*
-  for (size_t i = 0; i < muons->size(); ++i){
-    edm::RefToBase<reco::Muon> muRef = muons->refAt(i);
-    const reco::Muon* mu = muRef.get();
-    if (debug) cout << "new muon, i = " << i << " is it global? " << mu->isGlobalMuon() << endl;
-
-    if (not mu->isGlobalMuon()) continue;
-    
-    data_.init();
-    data_.muon_pt = mu->pt();
-    tree->Fill();
-  }
-  */
 }
 
 
 
 
-void CSCLCTFinder::beginJob(){}
+void CSCLCTFinder::beginJob(){
+  //Lets make the SlopeExtrapolationLUTMaps
+  cout << "Begin job!" << endl;
+
+  string SlopeExtrapolationME11aEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer1.txt";
+  ifstream SlopeExtrapolationME11aEvenL1File;
+  SlopeExtrapolationME11aEvenL1File.open(SlopeExtrapolationME11aEvenL1Name);
+  if (SlopeExtrapolationME11aEvenL1File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11aEvenL1File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11aEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11bEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer1.txt";
+  ifstream SlopeExtrapolationME11bEvenL1File;
+  SlopeExtrapolationME11bEvenL1File.open(SlopeExtrapolationME11bEvenL1Name);
+  if (SlopeExtrapolationME11bEvenL1File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11bEvenL1File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11bEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11aOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer1.txt";
+  ifstream SlopeExtrapolationME11aOddL1File;
+  SlopeExtrapolationME11aOddL1File.open(SlopeExtrapolationME11aOddL1Name);
+  if (SlopeExtrapolationME11aOddL1File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11aOddL1File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11aOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11bOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer1.txt";
+  ifstream SlopeExtrapolationME11bOddL1File;
+  SlopeExtrapolationME11bOddL1File.open(SlopeExtrapolationME11bOddL1Name);
+  if (SlopeExtrapolationME11bOddL1File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11bOddL1File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11bOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11aEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer2.txt";
+  ifstream SlopeExtrapolationME11aEvenL2File;
+  SlopeExtrapolationME11aEvenL2File.open(SlopeExtrapolationME11aEvenL2Name);
+  if (SlopeExtrapolationME11aEvenL2File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11aEvenL2File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11aEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11bEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer2.txt";
+  ifstream SlopeExtrapolationME11bEvenL2File;
+  SlopeExtrapolationME11bEvenL2File.open(SlopeExtrapolationME11bEvenL2Name);
+  if (SlopeExtrapolationME11bEvenL2File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11bEvenL2File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11bEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11aOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer2.txt";
+  ifstream SlopeExtrapolationME11aOddL2File;
+  SlopeExtrapolationME11aOddL2File.open(SlopeExtrapolationME11aOddL2Name);
+  if (SlopeExtrapolationME11aOddL2File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11aOddL2File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11aOddL2_Map[key] = value;
+      }
+    }
+  }
+
+  string SlopeExtrapolationME11bOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer2.txt";
+  ifstream SlopeExtrapolationME11bOddL2File;
+  SlopeExtrapolationME11bOddL2File.open(SlopeExtrapolationME11bOddL2Name);
+  if (SlopeExtrapolationME11bOddL2File.is_open()){
+    string line;
+    while(getline(SlopeExtrapolationME11bOddL2File, line)){
+      cout << line << endl;
+      string delimiter = " ";
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (key != 0){
+        SlopeExtrapolationME11bOddL2_Map[key] = value;
+      }
+    }
+  }
+
+  cout << "Created all slope LUTs" << endl;
+  cout << "Ended Begin Job, starting Event Loop" << endl;
+}
 void CSCLCTFinder::endJob(){}
 
 DEFINE_FWK_MODULE(CSCLCTFinder);
