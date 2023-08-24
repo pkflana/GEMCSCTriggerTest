@@ -2,6 +2,7 @@
 #include <memory>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -291,6 +292,60 @@ private:
   const edm::ESGetToken<CSCGeometry, MuonGeometryRecord> cscGeomToken_;
   const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> ttkToken_;
   const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> geomToken_;
+
+  //Maps for the CSC LCT Slope Extrapolation (CSC LCT -> GEM Layers)
+  //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
+  string SlopeExtrapolationME11aEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer1.txt";
+  map<int, int> SlopeExtrapolationME11aEvenL1_Map;
+  string SlopeExtrapolationME11bEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer1.txt";
+  map<int, int> SlopeExtrapolationME11bEvenL1_Map;
+  string SlopeExtrapolationME11aOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer1.txt";
+  map<int, int> SlopeExtrapolationME11aOddL1_Map;
+  string SlopeExtrapolationME11bOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer1.txt";
+  map<int, int> SlopeExtrapolationME11bOddL1_Map;
+
+  string SlopeExtrapolationME11aEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer2.txt";
+  map<int, int> SlopeExtrapolationME11aEvenL2_Map;
+  string SlopeExtrapolationME11bEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer2.txt";
+  map<int, int> SlopeExtrapolationME11bEvenL2_Map;
+  string SlopeExtrapolationME11aOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer2.txt";
+  map<int, int> SlopeExtrapolationME11aOddL2_Map;
+  string SlopeExtrapolationME11bOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer2.txt";
+  map<int, int> SlopeExtrapolationME11bOddL2_Map;
+
+  //Maps for the GEM Pad Digi Clusters to be converted into CSC eighth strip units
+  //Split by Even/Odd, and by ME11a/ME11b (4 cases)
+  string GEMPadDigiToCSCEightStripME11aEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_even.txt";
+  map<int, int> GEMPadDigiToCSCEigthStripME11aEven_Map;
+  string GEMPadDigiToCSCEightStripME11bEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_even.txt";
+  map<int, int> GEMPadDigiToCSCEigthStripME11bEven_Map;
+  string GEMPadDigiToCSCEightStripME11aOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_odd.txt";
+  map<int, int> GEMPadDigiToCSCEigthStripME11aOdd_Map;
+  string GEMPadDigiToCSCEightStripME11bOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_odd.txt";
+  map<int, int> GEMPadDigiToCSCEigthStripME11bOdd_Map;
+
+  //Maps for the GEM Pad Digi Clusters to be converted into CSC Min and Max WireGroups
+  //Split by Even/Odd, Layer1/Layer2, and by Min/Max
+  string GEMPadDigiToCSCWGMinEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_even.txt";
+  map<int, int> GEMPadDigiToCSCWGMinEvenL1_Map;
+  string GEMPadDigiToCSCWGMaxEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_even.txt";
+  map<int, int> GEMPadDigiToCSCWGMaxEvenL1_Map;
+
+  string GEMPadDigiToCSCWGMinOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_odd.txt";
+  map<int, int> GEMPadDigiToCSCWGMinOddL1_Map;
+  string GEMPadDigiToCSCWGMaxOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_odd.txt";
+  map<int, int> GEMPadDigiToCSCWGMaxOddL1_Map;
+
+  string GEMPadDigiToCSCWGMinEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_even.txt";
+  map<int, int> GEMPadDigiToCSCWGMinEvenL2_Map;
+  string GEMPadDigiToCSCWGMaxEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_even.txt";
+  map<int, int> GEMPadDigiToCSCWGMaxEvenL2_Map;
+
+  string GEMPadDigiToCSCWGMinOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_odd.txt";
+  map<int, int> GEMPadDigiToCSCWGMinOddL2_Map;
+  string GEMPadDigiToCSCWGMaxOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_odd.txt";
+  map<int, int> GEMPadDigiToCSCWGMaxOddL2_Map;
+
 };
 
 
@@ -386,8 +441,11 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
       GEMDetId SegmentGEMDetId;
       GEMDetId TrackGEMDetId;
       vector<int> best_clusterPads;
-      vector<int> best_clsuterBXs;
+      vector<int> best_clusterBXs;
       bool good_event = false;
+      int LCT_Extrapolation_MatchPad = 999;
+      int LCT_Extrapolation_MatchBX = 999;
+      int LCT_Extrapolation_MatchPad_CSCes = 999;
 
       const TrackingRecHit* RecHit = (Track->recHit(RecHit_iter)).get();
       DetId RecHitId = RecHit->geographicalId();
@@ -423,7 +481,6 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           cout << "Found a Match!!!" << endl;
           cout << "Segment DetID: " << SegmentCSCDetId << endl;
           cout << "LCT DetID    : " << LCTDetId << endl;
-          cout << "Lets look at some higher level info" << endl;
         }
 
         std::vector<CSCCorrelatedLCTDigi>::const_iterator digiItr = (*j).second.first;
@@ -440,6 +497,123 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
           if (abs(SegmentFracStrip - digiItr->getFractionalStrip()) < abs(SegmentFracStrip - LCTDigiMatch.getFractionalStrip())) LCTDigiMatch = *digiItr;
         }
         //Found the best DigiItr, now lets work on propagating to GEM
+        //LCT FW Propagation
+        int LCT_eighth_strip = (LCTDigiMatch.getStrip())*4 + (LCTDigiMatch.getQuartStripBit())*2 + (LCTDigiMatch.getEighthStripBit());
+        if (debug) cout << "Found the LCT Eighth Strip at " << LCT_eighth_strip << endl;
+        int slope_propagationL1 = 999;
+        int slope_propagationL2 = 999;
+        if (LCTDetId.chamber()%2 == 0){
+          if (LCTDetId.isME1a()){
+            slope_propagationL1 = SlopeExtrapolationME11aEvenL1_Map[LCTDigiMatch.getSlope()];
+            slope_propagationL2 = SlopeExtrapolationME11aEvenL2_Map[LCTDigiMatch.getSlope()];
+          }
+          if (LCTDetId.isME1b()){
+            slope_propagationL1 = SlopeExtrapolationME11bEvenL1_Map[LCTDigiMatch.getSlope()];
+            slope_propagationL2 = SlopeExtrapolationME11bEvenL2_Map[LCTDigiMatch.getSlope()];
+          }
+        }
+        if (LCTDetId.chamber()%2 != 0){
+          if (LCTDetId.isME1a()){
+            slope_propagationL1 = SlopeExtrapolationME11aOddL1_Map[LCTDigiMatch.getSlope()];
+            slope_propagationL2 = SlopeExtrapolationME11aOddL2_Map[LCTDigiMatch.getSlope()];
+          }
+          if (LCTDetId.isME1b()){
+            slope_propagationL1 = SlopeExtrapolationME11aOddL1_Map[LCTDigiMatch.getSlope()];
+            slope_propagationL2 = SlopeExtrapolationME11aOddL2_Map[LCTDigiMatch.getSlope()];
+          }
+        }
+        if (debug) cout << "Slope adjustment is L1 " << slope_propagationL1 << " and L2 " << slope_propagationL2 << endl;
+        int LCT_to_GEM1_eighth_strip = LCT_eighth_strip + slope_propagationL1*((LCTDigiMatch.getBend()*2)-1);
+        int LCT_to_GEM2_eighth_strip = LCT_eighth_strip + slope_propagationL2*((LCTDigiMatch.getBend()*2)-1);
+        if (debug) cout << "LCT Propagations: L1 = " << LCT_to_GEM1_eighth_strip << " and L2 = " << LCT_to_GEM2_eighth_strip << endl;
+
+
+        //Propagated to eighth strip, but now lets match to a GEM Pad Digi Cluster
+        //Even matching window 20 CSC eighth strips
+        //Odd matching window 40 CSC eighth strips
+        //WG matching window 7 WG
+        int even_delta_es = 50;
+        int odd_delta_es = 100;
+        int delta_wg = 20;
+        for (GEMPadDigiClusterCollection::DigiRangeIterator j = gemPadDigis->begin(); j != gemPadDigis->end(); j++){
+          GEMDetId GEMPadDigiDetID = (*j).first;
+          if (!(((LCTDetId.endcap() == 2 and GEMPadDigiDetID.region() == -1) or (LCTDetId.endcap() == 1 and GEMPadDigiDetID.region() == 1)) and LCTDetId.station() == GEMPadDigiDetID.station() and LCTDetId.ring() == GEMPadDigiDetID.ring() and LCTDetId.chamber() == GEMPadDigiDetID.chamber())) continue;
+
+          std::vector<GEMPadDigiCluster>::const_iterator digiItr = (*j).second.first;
+          std::vector<GEMPadDigiCluster>::const_iterator last = (*j).second.second;
+          for (; digiItr != last; ++digiItr) {
+            //These are CLUSTERS, but we don't care about clusters we care about pads!!!
+            cout << "Print all pads" << endl;
+            for (int pad: digiItr->pads()){
+              cout << pad << " ";
+            }
+            cout << endl;
+            for (int pad: digiItr->pads()){
+              int GEMPadToCSCes = 999;
+              int GEMPadMaxWG = 999;
+              int GEMPadMinWG = 999;
+              if (LCTDetId.chamber()%2 == 0){
+                if (LCTDetId.isME1a()){              
+                  GEMPadToCSCes = GEMPadDigiToCSCEigthStripME11aEven_Map[pad];
+                }
+                if (LCTDetId.isME1b()){
+                  GEMPadToCSCes = GEMPadDigiToCSCEigthStripME11bEven_Map[pad];
+                }
+                if (GEMPadDigiDetID.layer() == 1){
+                  GEMPadMinWG = GEMPadDigiToCSCWGMinEvenL1_Map[GEMPadDigiDetID.roll()-1];
+                  GEMPadMaxWG = GEMPadDigiToCSCWGMaxEvenL1_Map[GEMPadDigiDetID.roll()-1];
+                }
+                if (GEMPadDigiDetID.layer() == 2){
+                  GEMPadMinWG = GEMPadDigiToCSCWGMinEvenL2_Map[GEMPadDigiDetID.roll()-1];
+                  GEMPadMaxWG = GEMPadDigiToCSCWGMaxEvenL2_Map[GEMPadDigiDetID.roll()-1];
+                }
+              }
+              if (LCTDetId.chamber()%2 == 1){
+                if (LCTDetId.isME1a()){
+                  GEMPadToCSCes = GEMPadDigiToCSCEigthStripME11aOdd_Map[pad];
+                }
+                if (LCTDetId.isME1b()){
+                  GEMPadToCSCes = GEMPadDigiToCSCEigthStripME11bOdd_Map[pad];
+                }
+                if (GEMPadDigiDetID.layer() == 1){
+                  GEMPadMinWG = GEMPadDigiToCSCWGMinOddL1_Map[GEMPadDigiDetID.roll()-1];
+                  GEMPadMaxWG = GEMPadDigiToCSCWGMaxOddL1_Map[GEMPadDigiDetID.roll()-1];
+                }
+                if (GEMPadDigiDetID.layer() == 2){
+                  GEMPadMinWG = GEMPadDigiToCSCWGMinOddL2_Map[GEMPadDigiDetID.roll()-1];
+                  GEMPadMaxWG = GEMPadDigiToCSCWGMaxOddL2_Map[GEMPadDigiDetID.roll()-1];
+                }
+              }
+
+              //Now finally, lets check if it is a match
+              //Pad/Strip check -- abs(LCT_to_GEM*_eighth_strip - GEMPadToCSCes) < *_delta_es
+              //WG/Eta check -- (GEMPadMinWG - delta_wg) < GEMPadDigiDetID.roll() < (GEMPadMaxWG + delta_wg)
+              int tmp_delta_es = (GEMPadDigiDetID.layer() == 1) ? abs(LCT_to_GEM1_eighth_strip - GEMPadToCSCes) : abs(LCT_to_GEM2_eighth_strip - GEMPadToCSCes);
+              if (((GEMPadMinWG - delta_wg) < GEMPadDigiDetID.roll()) and (GEMPadDigiDetID.roll() < (GEMPadMaxWG + delta_wg))){
+                if (
+                  ((LCTDetId.chamber()%2 == 0) and (tmp_delta_es < even_delta_es)) or
+                  ((LCTDetId.chamber()%2 == 1) and (tmp_delta_es < odd_delta_es))
+                  ){
+                  if (!(tmp_delta_es < abs(LCT_Extrapolation_MatchPad_CSCes - GEMPadToCSCes))) continue;
+                  cout << "good match!" << endl;
+                  cout << "Pad went from " << pad << " to CSC units " << GEMPadToCSCes << " and we propagated to ";
+                  if (GEMPadDigiDetID.layer() == 1) cout << LCT_to_GEM1_eighth_strip << endl;
+                  if (GEMPadDigiDetID.layer() == 2) cout << LCT_to_GEM2_eighth_strip << endl;
+                  cout << "Eta was " <<  GEMPadDigiDetID.roll() << " which goes to WG min/max " << GEMPadMinWG << "/" << GEMPadMaxWG << " and our LCT WG is " << LCTDigiMatch.getKeyWG() << endl;
+                  //Save the matching GEMPadDigi for later comparison to the Segment Propagated Matches
+                  //We don't consider alignment yet!!!!!!!!!
+                  LCT_Extrapolation_MatchPad = pad;
+                  LCT_Extrapolation_MatchBX = digiItr->bx();
+                  LCT_Extrapolation_MatchPad_CSCes = (GEMPadDigiDetID.layer() == 1) ? LCT_to_GEM1_eighth_strip : LCT_to_GEM2_eighth_strip;
+                  cout << "This is our extra pad/bx " << pad << ":" << digiItr->bx() << endl;
+                }
+              }
+            }
+          }
+        }
+
+
+
         //Set Up Segment Propagation
         bool good_segment_prop = false;
         DetId segDetId = ME11_segment->geographicalId();
@@ -491,6 +665,7 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                 good_segment_prop = true;
                 float new_delta_x = abs(hit->localPosition().x() - ch->toLocal(TSOS_Segment_On_GEM.globalPosition()).x());
                 if (not (new_delta_x < tmp_delta_x)) continue;
+                cout << "Best residual so far is " << tmp_delta_x << endl;
                 tmp_delta_x = new_delta_x;
                 const auto& etaPart = GEMGeometry_->etaPartition(gemid);
                 GEM_Hit_Match_Segment_GP = etaPart->toGlobal(hit->localPosition());
@@ -511,9 +686,11 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                       if (pad == int((hit->firstClusterStrip()/2.0))){
                         data_.SegmentHit_DigiCluster_BestPad = pad; data_.SegmentHit_DigiCluster_BestBX = digiItr->bx();
                         if (debug) cout << "    THIS IS THE MATCH" << endl;
+                        cout << "We found the SegmentProp digiPad match, lets see how it compares to the LCT match" << endl;
+                        cout << "Pad Segment:LCT " << pad << ":" << LCT_Extrapolation_MatchPad << endl;
+                        cout << "BX  Segment:LCT " << digiItr->bx() << ":" << LCT_Extrapolation_MatchBX << endl;
                       }
                     }
-                    cout << endl;
                   }
                 }
               }
@@ -637,7 +814,260 @@ CSCLCTSegmentMatcher::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 
 
 
-void CSCLCTSegmentMatcher::beginJob(){}
+void CSCLCTSegmentMatcher::beginJob(){
+  //Lets make the SlopeExtrapolationLUTMaps
+  cout << "Begin job!" << endl;
+
+  string delimiter = " ";
+  string line;
+
+  ifstream SlopeExtrapolationME11aEvenL1File;
+  SlopeExtrapolationME11aEvenL1File.open(SlopeExtrapolationME11aEvenL1Name);
+  if (SlopeExtrapolationME11aEvenL1File.is_open()){
+    while(getline(SlopeExtrapolationME11aEvenL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11aEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11bEvenL1File;
+  SlopeExtrapolationME11bEvenL1File.open(SlopeExtrapolationME11bEvenL1Name);
+  if (SlopeExtrapolationME11bEvenL1File.is_open()){
+    while(getline(SlopeExtrapolationME11bEvenL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11bEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11aOddL1File;
+  SlopeExtrapolationME11aOddL1File.open(SlopeExtrapolationME11aOddL1Name);
+  if (SlopeExtrapolationME11aOddL1File.is_open()){
+    while(getline(SlopeExtrapolationME11aOddL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11aOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11bOddL1File;
+  SlopeExtrapolationME11bOddL1File.open(SlopeExtrapolationME11bOddL1Name);
+  if (SlopeExtrapolationME11bOddL1File.is_open()){
+    while(getline(SlopeExtrapolationME11bOddL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11bOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11aEvenL2File;
+  SlopeExtrapolationME11aEvenL2File.open(SlopeExtrapolationME11aEvenL2Name);
+  if (SlopeExtrapolationME11aEvenL2File.is_open()){
+    while(getline(SlopeExtrapolationME11aEvenL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11aEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11bEvenL2File;
+  SlopeExtrapolationME11bEvenL2File.open(SlopeExtrapolationME11bEvenL2Name);
+  if (SlopeExtrapolationME11bEvenL2File.is_open()){
+    while(getline(SlopeExtrapolationME11bEvenL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11bEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11aOddL2File;
+  SlopeExtrapolationME11aOddL2File.open(SlopeExtrapolationME11aOddL2Name);
+  if (SlopeExtrapolationME11aOddL2File.is_open()){
+    while(getline(SlopeExtrapolationME11aOddL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11aOddL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream SlopeExtrapolationME11bOddL2File;
+  SlopeExtrapolationME11bOddL2File.open(SlopeExtrapolationME11bOddL2Name);
+  if (SlopeExtrapolationME11bOddL2File.is_open()){
+    while(getline(SlopeExtrapolationME11bOddL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        SlopeExtrapolationME11bOddL2_Map[key] = value;
+      }
+    }
+  }
+
+  //GEMPadDigi to CSC Eighth Strip LUTs
+  ifstream GEMPadDigiToCSCEightStripME11aEvenFile;
+  GEMPadDigiToCSCEightStripME11aEvenFile.open(GEMPadDigiToCSCEightStripME11aEvenName);
+  if (GEMPadDigiToCSCEightStripME11aEvenFile.is_open()){
+    while(getline(GEMPadDigiToCSCEightStripME11aEvenFile, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCEigthStripME11aEven_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCEightStripME11bEvenFile;
+  GEMPadDigiToCSCEightStripME11bEvenFile.open(GEMPadDigiToCSCEightStripME11bEvenName);
+  if (GEMPadDigiToCSCEightStripME11bEvenFile.is_open()){
+    while(getline(GEMPadDigiToCSCEightStripME11bEvenFile, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCEigthStripME11bEven_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCEightStripME11aOddFile;
+  GEMPadDigiToCSCEightStripME11aOddFile.open(GEMPadDigiToCSCEightStripME11aOddName);
+  if (GEMPadDigiToCSCEightStripME11aOddFile.is_open()){
+    while(getline(GEMPadDigiToCSCEightStripME11aOddFile, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCEigthStripME11aOdd_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCEightStripME11bOddFile;
+  GEMPadDigiToCSCEightStripME11bOddFile.open(GEMPadDigiToCSCEightStripME11bOddName);
+  if (GEMPadDigiToCSCEightStripME11bOddFile.is_open()){
+    while(getline(GEMPadDigiToCSCEightStripME11bOddFile, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCEigthStripME11bOdd_Map[key] = value;
+      }
+    }
+  }
+
+  //GEMPadDigi to CSC WG Min/Max LUTs
+  ifstream GEMPadDigiToCSCWGMinEvenL1File;
+  GEMPadDigiToCSCWGMinEvenL1File.open(GEMPadDigiToCSCWGMinEvenL1Name);
+  if (GEMPadDigiToCSCWGMinEvenL1File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMinEvenL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMinEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMaxEvenL1File;
+  GEMPadDigiToCSCWGMaxEvenL1File.open(GEMPadDigiToCSCWGMaxEvenL1Name);
+  if (GEMPadDigiToCSCWGMaxEvenL1File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMaxEvenL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMaxEvenL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMinOddL1File;
+  GEMPadDigiToCSCWGMinOddL1File.open(GEMPadDigiToCSCWGMinOddL1Name);
+  if (GEMPadDigiToCSCWGMinOddL1File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMinOddL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMinOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMaxOddL1File;
+  GEMPadDigiToCSCWGMaxOddL1File.open(GEMPadDigiToCSCWGMaxOddL1Name);
+  if (GEMPadDigiToCSCWGMaxOddL1File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMaxOddL1File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMaxOddL1_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMinEvenL2File;
+  GEMPadDigiToCSCWGMinEvenL2File.open(GEMPadDigiToCSCWGMinEvenL2Name);
+  if (GEMPadDigiToCSCWGMinEvenL2File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMinEvenL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMinEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMaxEvenL2File;
+  GEMPadDigiToCSCWGMaxEvenL2File.open(GEMPadDigiToCSCWGMaxEvenL2Name);
+  if (GEMPadDigiToCSCWGMaxEvenL2File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMaxEvenL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMaxEvenL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMinOddL2File;
+  GEMPadDigiToCSCWGMinOddL2File.open(GEMPadDigiToCSCWGMinOddL2Name);
+  if (GEMPadDigiToCSCWGMinOddL2File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMinOddL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMinOddL2_Map[key] = value;
+      }
+    }
+  }
+
+  ifstream GEMPadDigiToCSCWGMaxOddL2File;
+  GEMPadDigiToCSCWGMaxOddL2File.open(GEMPadDigiToCSCWGMaxOddL2Name);
+  if (GEMPadDigiToCSCWGMaxOddL2File.is_open()){
+    while(getline(GEMPadDigiToCSCWGMaxOddL2File, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        GEMPadDigiToCSCWGMaxOddL2_Map[key] = value;
+      }
+    }
+  }
+
+
+
+  cout << "Created all slope LUTs" << endl;
+  cout << "Ended Begin Job, starting Event Loop" << endl;
+}
 void CSCLCTSegmentMatcher::endJob(){}
 
 DEFINE_FWK_MODULE(CSCLCTSegmentMatcher);
