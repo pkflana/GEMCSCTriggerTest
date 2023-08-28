@@ -150,6 +150,10 @@ struct GEMCSCTriggerData
 
   //============ LCT Prop =================//
   bool has_LCT_match1; bool has_LCT_match2;
+  float LCT_match_GE1_residual; float LCT_match_GE2_residual;
+  int LCT_match_GE1_pad; int LCT_match_GE2_pad;
+  int LCT_match_GE1_BX; int LCT_match_GE2_BX;
+  int LCT_match_GE1_padES; int LCT_match_GE2_padES;
 
 };
 
@@ -237,6 +241,11 @@ void GEMCSCTriggerData::init()
 
   //============ LCT Match ================//
   has_LCT_match1 = false; has_LCT_match2 = false;
+  LCT_match_GE1_residual = value; LCT_match_GE2_residual = value;
+  LCT_match_GE1_pad = value; LCT_match_GE2_pad = value;
+  LCT_match_GE1_BX = value; LCT_match_GE2_BX = value;
+  LCT_match_GE1_padES = value; LCT_match_GE2_padES = value;
+
 
 }
 
@@ -249,6 +258,61 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("evtNum", &evtNum); t->Branch("lumiBlock", &lumiBlock); t->Branch("runNum", &runNum);
 
   //============ Segment Info =============//
+  t->Branch("has_segment", &has_segment);
+  t->Branch("segment_CSC_endcap", &segment_CSC_endcap); t->Branch("segment_CSC_station", &segment_CSC_station);
+  t->Branch("segment_CSC_ring", &segment_CSC_ring); t->Branch("segment_CSC_chamber", &segment_CSC_chamber);
+  t->Branch("segment_CSC_LP_x", &segment_CSC_LP_x); t->Branch("segment_CSC_LP_y", &segment_CSC_LP_y); t->Branch("segment_CSC_LP_z", &segment_CSC_LP_z);
+  t->Branch("segment_CSC_GP_x", &segment_CSC_GP_x); t->Branch("segment_CSC_GP_y", &segment_CSC_GP_y); t->Branch("segment_CSC_GP_z", &segment_CSC_GP_z);
+
+  //============ Segment Prop =============//
+  t->Branch("has_segment_prop1", &has_segment_prop1); t->Branch("has_segment_prop2", &has_segment_prop2);
+  t->Branch("segment_GE1_region", &segment_GE1_region); t->Branch("segment_GE2_region", &segment_GE2_region);
+  t->Branch("segment_GE1_station", &segment_GE1_station); t->Branch("segment_GE2_station", &segment_GE2_station);
+  t->Branch("segment_GE1_ring", &segment_GE1_ring); t->Branch("segment_GE2_ring", &segment_GE1_ring);
+  t->Branch("segment_GE1_chamber", &segment_GE1_chamber); t->Branch("segment_GE2_chamber", &segment_GE2_chamber);
+  t->Branch("egment_GE1_layer", &segment_GE1_layer); t->Branch("segment_GE2_layer", &segment_GE2_layer);
+  t->Branch("segment_GE1_roll", &segment_GE1_roll); t->Branch("segment_GE2_roll", &segment_GE2_roll);
+  t->Branch("segment_GE1_LP_x", &segment_GE1_LP_x); t->Branch("segment_GE1_LP_y", &segment_GE1_LP_y); t->Branch("segment_GE1_LP_z", &segment_GE1_LP_z);
+  t->Branch("segment_GE2_LP_x", &segment_GE2_LP_x); t->Branch("segment_GE2_LP_y", &segment_GE2_LP_y); t->Branch("segment_GE2_LP_z", &segment_GE2_LP_z);
+  t->Branch("segment_GE1_GP_x", &segment_GE1_GP_x); t->Branch("segment_GE1_GP_y", &segment_GE1_GP_y); t->Branch("segment_GE1_GP_z", &segment_GE1_GP_z);
+  t->Branch("segment_GE2_GP_x", &segment_GE2_GP_x); t->Branch("segment_GE2_GP_y", &segment_GE2_GP_y); t->Branch("segment_GE2_GP_z", &segment_GE2_GP_z);
+
+  //============ Segment Match ============//
+  t->Branch("has_segment_match1", &has_segment_match1); t->Branch("has_segment_match2", &has_segment_match2);
+  t->Branch("segment_match_GE1_residual", &segment_match_GE1_residual); t->Branch("segment_match_GE2_residual", &segment_match_GE2_residual);
+  t->Branch("segment_match_GE1_LP_x", &segment_match_GE1_LP_x); t->Branch("segment_match_GE1_LP_y", &segment_match_GE1_LP_y); t->Branch("segment_match_GE1_LP_z", &segment_match_GE1_LP_z);
+  t->Branch("segment_match_GE2_LP_x", &segment_match_GE2_LP_x); t->Branch("segment_match_GE2_LP_y", &segment_match_GE2_LP_y); t->Branch("segment_match_GE2_LP_z", &segment_match_GE2_LP_z);
+  t->Branch("segment_match_GE1_GP_x", &segment_match_GE1_GP_x); t->Branch("segment_match_GE1_GP_y", &segment_match_GE1_GP_y); t->Branch("segment_match_GE1_GP_z", &segment_match_GE1_GP_z);
+  t->Branch("segment_match_GE2_GP_x", &segment_match_GE2_GP_x); t->Branch("segment_match_GE2_GP_y", &segment_match_GE2_GP_y); t->Branch("segment_match_GE2_GP_z", &segment_match_GE2_GP_z);
+
+
+
+
+  //============ LCT Info =================//
+  t->Branch("s_LCT", &has_LCT);
+  t->Branch("LCT_CSC_endcap", &LCT_CSC_endcap); t->Branch("LCT_CSC_station", &LCT_CSC_station);
+  t->Branch("LCT_CSC_ring", &LCT_CSC_ring); t->Branch("LCT_CSC_chamber", &LCT_CSC_chamber);
+  t->Branch("LCT_CSC_ME1a", &LCT_CSC_ME1a); t->Branch("LCT_CSC_ME1b", &LCT_CSC_ME1b);
+  t->Branch("LCT_segment_residual", &LCT_segment_residual);
+  t->Branch("LCT_eighthstrip", &LCT_eighthstrip); t->Branch("LCT_slope", &LCT_slope);
+  t->Branch("LCT_wiregroup", &LCT_wiregroup); t->Branch("LCT_quality", &LCT_quality);
+  t->Branch("LCT_bend", &LCT_bend); t->Branch("LCT_BX", &LCT_BX);
+
+  //============ LCT Prop =================//
+  t->Branch("has_LCT_prop1", &has_LCT_prop1); t->Branch("has_LCT_prop2", &has_LCT_prop2);
+  t->Branch("LCT_GE1_region", &LCT_GE1_region); t->Branch("LCT_GE2_region", &LCT_GE2_region);
+  t->Branch("LCT_GE1_station", &LCT_GE1_station); t->Branch("LCT_GE2_station", &LCT_GE2_station);
+  t->Branch("LCT_GE1_ring", &LCT_GE1_ring); t->Branch("LCT_GE2_ring", &LCT_GE2_ring);
+  t->Branch("LCT_GE1_chamber", &LCT_GE1_chamber); t->Branch("LCT_GE2_chamber", &LCT_GE2_chamber);
+  t->Branch("LCT_GE1_layer", &LCT_GE1_layer); t->Branch("LCT_GE2_layer", &LCT_GE2_layer);
+  t->Branch("LCT_GE1_strip", &LCT_GE1_strip); t->Branch("LCT_GE2_strip", &LCT_GE2_strip);
+
+  //============ LCT Match ================//
+  t->Branch("has_LCT_match1", &has_LCT_match1); t->Branch("has_LCT_match2", &has_LCT_match2);
+  t->Branch("LCT_match_GE1_residual", &LCT_match_GE1_residual); t->Branch("LCT_match_GE2_residual", &LCT_match_GE2_residual);
+  t->Branch("LCT_match_GE1_pad", &LCT_match_GE1_pad); t->Branch("LCT_match_GE2_pad", &LCT_match_GE2_pad);
+  t->Branch("LCT_match_GE1_BX", &LCT_match_GE1_BX); t->Branch("LCT_match_GE2_BX", &LCT_match_GE2_BX);
+  t->Branch("LCT_match_GE1_padES", &LCT_match_GE1_padES); t->Branch("LCT_match_GE2_padES", &LCT_match_GE2_padES);
 
   return t;
 }
@@ -456,6 +520,8 @@ void GEMCSCTriggerTester::startMuonAnalysis(const reco::Muon* mu){
     
     matchSegmentTrackLCT();
     cout << "Results from matchSegmentTrackLCT S:T:L " << data_.has_segment_match1 << data_.has_segment_match2 << ":" << data_.has_track_match1 << data_.has_track_match2 << ":" << data_.has_LCT_match1 << data_.has_LCT_match2 << endl;
+
+    tree->Fill();
   } 
 }
 
@@ -709,6 +775,8 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
   int LCTToGEML1EighthStrip = LCT_eighth_strip + slope_propagationL1*((LCT_bend*2)-1);
   int LCTToGEML2EighthStrip = LCT_eighth_strip + slope_propagationL2*((LCT_bend*2)-1);
   if (debug) cout << "LCT Prop from " << LCT_eighth_strip << " to L1 " << LCTToGEML1EighthStrip << " and L2 " << LCTToGEML2EighthStrip << endl;
+  data_.has_LCT_prop1 = true;
+  data_.has_LCT_prop2 = true;
   data_.LCT_GE1_region = (data_.LCT_CSC_endcap*2)-1;  data_.LCT_GE2_region = (data_.LCT_CSC_endcap*2)-1;
   data_.LCT_GE1_station = data_.LCT_CSC_station; data_.LCT_GE2_station = data_.LCT_CSC_station;
   data_.LCT_GE1_ring = data_.LCT_CSC_ring;    data_.LCT_GE2_ring = data_.LCT_CSC_ring;
@@ -810,13 +878,76 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
     GEMDetId GEMPadDigiDetID = (*j).first;
     if ((data_.LCT_GE1_region ==  GEMPadDigiDetID.region()) and (data_.LCT_GE1_station == GEMPadDigiDetID.station()) and (data_.LCT_GE1_ring == GEMPadDigiDetID.ring()) and (data_.LCT_GE1_chamber == GEMPadDigiDetID.chamber()) and (data_.LCT_GE1_layer == GEMPadDigiDetID.layer())){
       if (debug) cout << "Found a GEM Digi on correct chamber L1 " << GEMPadDigiDetID << endl;
+      //Set up maps
+      //int GEMPadToCSCes = 999;
+      //int GEMPadMaxWG = 999;
+      //int GEMPadMinWG = 999;
+      map<int, int> DigiToESMap;
+      map<int, int> WGMaxMap;
+      map<int, int> WGMinMap;
+      if (data_.LCT_CSC_ME1a){
+        DigiToESMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11aEven_Map : GEMPadDigiToCSCEigthStripME11aOdd_Map;
+      }
+      if (data_.LCT_CSC_ME1b){
+        DigiToESMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11bEven_Map : GEMPadDigiToCSCEigthStripME11bOdd_Map;
+      }
+      WGMinMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMinEvenL1_Map : GEMPadDigiToCSCWGMinOddL1_Map;
+      WGMaxMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMaxEvenL1_Map : GEMPadDigiToCSCWGMaxOddL1_Map;
+
+      std::vector<GEMPadDigiCluster>::const_iterator digiItr = (*j).second.first;
+      std::vector<GEMPadDigiCluster>::const_iterator last = (*j).second.second;
+      for (; digiItr != last; ++digiItr) {
+        //These are CLUSTERS, but we don't care about clusters we care about pads!!! 
+        for (int pad: digiItr->pads()){   
+          //Now finally, lets check if it is a match
+          //Pad/Strip check -- abs(LCT_to_GEM*_eighth_strip - GEMPadToCSCes) < *_delta_es
+          //WG/Eta check -- (GEMPadMinWG - delta_wg) < GEMPadDigiDetID.roll() < (GEMPadMaxWG + delta_wg)
+          int tmp_delta_es = abs(data_.LCT_GE1_strip - DigiToESMap[pad]);
+          int WG_Max = WGMaxMap[pad];
+          int WG_Min = WGMinMap[pad];
+          if ((tmp_delta_es < data_.LCT_match_GE1_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+            data_.has_LCT_match1 = true;
+            data_.LCT_match_GE1_residual = tmp_delta_es;
+            data_.LCT_match_GE1_pad = pad;
+            data_.LCT_match_GE1_BX = digiItr->bx();
+            data_.LCT_match_GE1_padES = DigiToESMap[pad];
+          }
+        }
+      }
     }
 
 
     if ((data_.LCT_GE2_region ==  GEMPadDigiDetID.region()) and (data_.LCT_GE2_station == GEMPadDigiDetID.station()) and (data_.LCT_GE2_ring == GEMPadDigiDetID.ring()) and (data_.LCT_GE2_chamber == GEMPadDigiDetID.chamber()) and (data_.LCT_GE2_layer == GEMPadDigiDetID.layer())){
       if (debug) cout << "Found a GEM Digi on correct chamber L2 " << GEMPadDigiDetID << endl;
-    }
+      map<int, int> DigiToESMap;
+      map<int, int> WGMaxMap;
+      map<int, int> WGMinMap;
+      if (data_.LCT_CSC_ME1a){
+        DigiToESMap = (data_.LCT_GE2_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11aEven_Map : GEMPadDigiToCSCEigthStripME11aOdd_Map;
+      }
+      if (data_.LCT_CSC_ME1b){
+        DigiToESMap = (data_.LCT_GE2_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11bEven_Map : GEMPadDigiToCSCEigthStripME11bOdd_Map;
+      }
+      WGMinMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMinEvenL2_Map : GEMPadDigiToCSCWGMinOddL2_Map;
+      WGMaxMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMaxEvenL2_Map : GEMPadDigiToCSCWGMaxOddL2_Map;
 
+      std::vector<GEMPadDigiCluster>::const_iterator digiItr = (*j).second.first;
+      std::vector<GEMPadDigiCluster>::const_iterator last = (*j).second.second;
+      for (; digiItr != last; ++digiItr) {
+        for (int pad: digiItr->pads()){
+          int tmp_delta_es = abs(data_.LCT_GE2_strip - DigiToESMap[pad]);
+          int WG_Max = WGMaxMap[pad];
+          int WG_Min = WGMinMap[pad];
+          if ((tmp_delta_es < data_.LCT_match_GE2_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+            data_.has_LCT_match2 = true;
+            data_.LCT_match_GE2_residual = tmp_delta_es;
+            data_.LCT_match_GE2_pad = pad;
+            data_.LCT_match_GE2_BX = digiItr->bx();
+            data_.LCT_match_GE2_padES = DigiToESMap[pad];
+          }
+        }
+      }
+    }
   }
 }
 
