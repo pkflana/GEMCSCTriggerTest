@@ -249,6 +249,8 @@ private:
   void propagateSegmentTrackLCT(const reco::Track* Track, CSCSegment* ME11_Segment, TrajectoryStateOnSurface Track_At_Segment, TrajectoryStateOnSurface& TSOS_Segment_On_GE1, TrajectoryStateOnSurface& TSOS_Segment_On_GE2, TrajectoryStateOnSurface& TSOS_Track_On_GE1, TrajectoryStateOnSurface& TSOS_Track_On_GE2);
   void matchSegmentTrackLCT();
 
+  void fillMap(map<int, int>& thisMap, string filename);
+
   edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> co_token;
   edm::Handle<CSCCorrelatedLCTDigiCollection> correlatedlcts;
   edm::EDGetTokenT<GEMPadDigiClusterCollection> gemdigi_token;
@@ -776,255 +778,56 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
   }
 }
 
+void GEMCSCTriggerTester::fillMap(map<int, int>& thisMap, string filename){
+  string delimiter = " ";
+  string line;
+  ifstream thisFile;
+  thisFile.open(filename);
+  if (thisFile.is_open()){
+    while(getline(thisFile, line)){
+      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
+      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
+      if (!((key == 0) and (value == 0))){
+        thisMap[key] = value;
+      }
+    }
+  }
+}
+
 void GEMCSCTriggerTester::beginJob(){
   //Lets make the SlopeExtrapolationLUTMaps
   cout << "Begin job!" << endl;
 
-  string delimiter = " ";
-  string line;
 
-  ifstream SlopeExtrapolationME11aEvenL1File;
-  SlopeExtrapolationME11aEvenL1File.open(SlopeExtrapolationME11aEvenL1Name);
-  if (SlopeExtrapolationME11aEvenL1File.is_open()){
-    while(getline(SlopeExtrapolationME11aEvenL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11aEvenL1_Map[key] = value;
-      }
-    }
-  }
+  fillMap(SlopeExtrapolationME11aEvenL1_Map, SlopeExtrapolationME11aEvenL1Name);
+  fillMap(SlopeExtrapolationME11aEvenL2_Map, SlopeExtrapolationME11aEvenL2Name);
 
-  ifstream SlopeExtrapolationME11bEvenL1File;
-  SlopeExtrapolationME11bEvenL1File.open(SlopeExtrapolationME11bEvenL1Name);
-  if (SlopeExtrapolationME11bEvenL1File.is_open()){
-    while(getline(SlopeExtrapolationME11bEvenL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11bEvenL1_Map[key] = value;
-      }
-    }
-  }
+  fillMap(SlopeExtrapolationME11bEvenL1_Map, SlopeExtrapolationME11bEvenL1Name);
+  fillMap(SlopeExtrapolationME11bEvenL2_Map, SlopeExtrapolationME11bEvenL2Name);
 
-  ifstream SlopeExtrapolationME11aOddL1File;
-  SlopeExtrapolationME11aOddL1File.open(SlopeExtrapolationME11aOddL1Name);
-  if (SlopeExtrapolationME11aOddL1File.is_open()){
-    while(getline(SlopeExtrapolationME11aOddL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11aOddL1_Map[key] = value;
-      }
-    }
-  }
+  fillMap(SlopeExtrapolationME11aOddL1_Map, SlopeExtrapolationME11aOddL1Name);
+  fillMap(SlopeExtrapolationME11aOddL2_Map, SlopeExtrapolationME11aOddL2Name);
 
-  ifstream SlopeExtrapolationME11bOddL1File;
-  SlopeExtrapolationME11bOddL1File.open(SlopeExtrapolationME11bOddL1Name);
-  if (SlopeExtrapolationME11bOddL1File.is_open()){
-    while(getline(SlopeExtrapolationME11bOddL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11bOddL1_Map[key] = value;
-      }
-    }
-  }
+  fillMap(SlopeExtrapolationME11bOddL1_Map, SlopeExtrapolationME11bOddL1Name);
+  fillMap(SlopeExtrapolationME11bOddL2_Map, SlopeExtrapolationME11bOddL2Name);
 
-  ifstream SlopeExtrapolationME11aEvenL2File;
-  SlopeExtrapolationME11aEvenL2File.open(SlopeExtrapolationME11aEvenL2Name);
-  if (SlopeExtrapolationME11aEvenL2File.is_open()){
-    while(getline(SlopeExtrapolationME11aEvenL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11aEvenL2_Map[key] = value;
-      }
-    }
-  }
+  fillMap(GEMPadDigiToCSCEigthStripME11aEven_Map, GEMPadDigiToCSCEightStripME11aEvenName);
+  fillMap(GEMPadDigiToCSCEigthStripME11bEven_Map, GEMPadDigiToCSCEightStripME11bEvenName);
 
-  ifstream SlopeExtrapolationME11bEvenL2File;
-  SlopeExtrapolationME11bEvenL2File.open(SlopeExtrapolationME11bEvenL2Name);
-  if (SlopeExtrapolationME11bEvenL2File.is_open()){
-    while(getline(SlopeExtrapolationME11bEvenL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11bEvenL2_Map[key] = value;
-      }
-    }
-  }
+  fillMap(GEMPadDigiToCSCEigthStripME11aOdd_Map, GEMPadDigiToCSCEightStripME11aOddName);
+  fillMap(GEMPadDigiToCSCEigthStripME11bOdd_Map, GEMPadDigiToCSCEightStripME11bOddName);
 
-  ifstream SlopeExtrapolationME11aOddL2File;
-  SlopeExtrapolationME11aOddL2File.open(SlopeExtrapolationME11aOddL2Name);
-  if (SlopeExtrapolationME11aOddL2File.is_open()){
-    while(getline(SlopeExtrapolationME11aOddL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11aOddL2_Map[key] = value;
-      }
-    }
-  }
+  fillMap(GEMPadDigiToCSCWGMinEvenL1_Map, GEMPadDigiToCSCWGMinEvenL1Name);
+  fillMap(GEMPadDigiToCSCWGMinEvenL2_Map, GEMPadDigiToCSCWGMinEvenL2Name);
 
-  ifstream SlopeExtrapolationME11bOddL2File;
-  SlopeExtrapolationME11bOddL2File.open(SlopeExtrapolationME11bOddL2Name);
-  if (SlopeExtrapolationME11bOddL2File.is_open()){
-    while(getline(SlopeExtrapolationME11bOddL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        SlopeExtrapolationME11bOddL2_Map[key] = value;
-      }
-    }
-  }
+  fillMap(GEMPadDigiToCSCWGMinOddL1_Map, GEMPadDigiToCSCWGMinOddL1Name);
+  fillMap(GEMPadDigiToCSCWGMinOddL2_Map, GEMPadDigiToCSCWGMinOddL2Name);
 
-  //GEMPadDigi to CSC Eighth Strip LUTs
-  ifstream GEMPadDigiToCSCEightStripME11aEvenFile;
-  GEMPadDigiToCSCEightStripME11aEvenFile.open(GEMPadDigiToCSCEightStripME11aEvenName);
-  if (GEMPadDigiToCSCEightStripME11aEvenFile.is_open()){
-    while(getline(GEMPadDigiToCSCEightStripME11aEvenFile, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCEigthStripME11aEven_Map[key] = value;
-      }
-    }
-  }
+  fillMap(GEMPadDigiToCSCWGMaxEvenL1_Map, GEMPadDigiToCSCWGMaxEvenL1Name);
+  fillMap(GEMPadDigiToCSCWGMaxEvenL2_Map, GEMPadDigiToCSCWGMaxEvenL2Name);
 
-  ifstream GEMPadDigiToCSCEightStripME11bEvenFile;
-  GEMPadDigiToCSCEightStripME11bEvenFile.open(GEMPadDigiToCSCEightStripME11bEvenName);
-  if (GEMPadDigiToCSCEightStripME11bEvenFile.is_open()){
-    while(getline(GEMPadDigiToCSCEightStripME11bEvenFile, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCEigthStripME11bEven_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCEightStripME11aOddFile;
-  GEMPadDigiToCSCEightStripME11aOddFile.open(GEMPadDigiToCSCEightStripME11aOddName);
-  if (GEMPadDigiToCSCEightStripME11aOddFile.is_open()){
-    while(getline(GEMPadDigiToCSCEightStripME11aOddFile, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCEigthStripME11aOdd_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCEightStripME11bOddFile;
-  GEMPadDigiToCSCEightStripME11bOddFile.open(GEMPadDigiToCSCEightStripME11bOddName);
-  if (GEMPadDigiToCSCEightStripME11bOddFile.is_open()){
-    while(getline(GEMPadDigiToCSCEightStripME11bOddFile, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCEigthStripME11bOdd_Map[key] = value;
-      }
-    }
-  }
-
-  //GEMPadDigi to CSC WG Min/Max LUTs
-  ifstream GEMPadDigiToCSCWGMinEvenL1File;
-  GEMPadDigiToCSCWGMinEvenL1File.open(GEMPadDigiToCSCWGMinEvenL1Name);
-  if (GEMPadDigiToCSCWGMinEvenL1File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMinEvenL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMinEvenL1_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMaxEvenL1File;
-  GEMPadDigiToCSCWGMaxEvenL1File.open(GEMPadDigiToCSCWGMaxEvenL1Name);
-  if (GEMPadDigiToCSCWGMaxEvenL1File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMaxEvenL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMaxEvenL1_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMinOddL1File;
-  GEMPadDigiToCSCWGMinOddL1File.open(GEMPadDigiToCSCWGMinOddL1Name);
-  if (GEMPadDigiToCSCWGMinOddL1File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMinOddL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMinOddL1_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMaxOddL1File;
-  GEMPadDigiToCSCWGMaxOddL1File.open(GEMPadDigiToCSCWGMaxOddL1Name);
-  if (GEMPadDigiToCSCWGMaxOddL1File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMaxOddL1File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMaxOddL1_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMinEvenL2File;
-  GEMPadDigiToCSCWGMinEvenL2File.open(GEMPadDigiToCSCWGMinEvenL2Name);
-  if (GEMPadDigiToCSCWGMinEvenL2File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMinEvenL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMinEvenL2_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMaxEvenL2File;
-  GEMPadDigiToCSCWGMaxEvenL2File.open(GEMPadDigiToCSCWGMaxEvenL2Name);
-  if (GEMPadDigiToCSCWGMaxEvenL2File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMaxEvenL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMaxEvenL2_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMinOddL2File;
-  GEMPadDigiToCSCWGMinOddL2File.open(GEMPadDigiToCSCWGMinOddL2Name);
-  if (GEMPadDigiToCSCWGMinOddL2File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMinOddL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMinOddL2_Map[key] = value;
-      }
-    }
-  }
-
-  ifstream GEMPadDigiToCSCWGMaxOddL2File;
-  GEMPadDigiToCSCWGMaxOddL2File.open(GEMPadDigiToCSCWGMaxOddL2Name);
-  if (GEMPadDigiToCSCWGMaxOddL2File.is_open()){
-    while(getline(GEMPadDigiToCSCWGMaxOddL2File, line)){
-      int key = atoi(line.substr(0, line.find(delimiter)).c_str());
-      int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        GEMPadDigiToCSCWGMaxOddL2_Map[key] = value;
-      }
-    }
-  }
-
+  fillMap(GEMPadDigiToCSCWGMaxOddL1_Map, GEMPadDigiToCSCWGMaxOddL1Name);
+  fillMap(GEMPadDigiToCSCWGMaxOddL2_Map, GEMPadDigiToCSCWGMaxOddL2Name);
 
 
   cout << "Created all LUTs" << endl;
