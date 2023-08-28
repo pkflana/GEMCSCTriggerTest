@@ -94,7 +94,11 @@ struct GEMCSCTriggerData
 
   //============ Segment Match ============//
   bool has_segment_match1; bool has_segment_match2;
-  float segment_GE1_residual; float segment_GE2_residual;
+  float segment_match_GE1_residual; float segment_match_GE2_residual;
+  float segment_match_GE1_LP_x; float segment_match_GE1_LP_y; float segment_match_GE1_LP_z;
+  float segment_match_GE2_LP_x; float segment_match_GE2_LP_y; float segment_match_GE2_LP_z;
+  float segment_match_GE1_GP_x; float segment_match_GE1_GP_y; float segment_match_GE1_GP_z;
+  float segment_match_GE2_GP_x; float segment_match_GE2_GP_y; float segment_match_GE2_GP_z;
 
   //============ Track Info ===============//
   bool has_track;
@@ -118,7 +122,11 @@ struct GEMCSCTriggerData
 
   //============ Track Match ==============//
   bool has_track_match1; bool has_track_match2;
-  float track_GE1_residual; float track_GE2_residual;
+  float track_match_GE1_residual; float track_match_GE2_residual;
+  float track_match_GE1_LP_x; float track_match_GE1_LP_y; float track_match_GE1_LP_z;
+  float track_match_GE2_LP_x; float track_match_GE2_LP_y; float track_match_GE2_LP_z;
+  float track_match_GE1_GP_x; float track_match_GE1_GP_y; float track_match_GE1_GP_z;
+  float track_match_GE2_GP_x; float track_match_GE2_GP_y; float track_match_GE2_GP_z;
 
   //============ LCT Info =================//
   bool has_LCT;
@@ -140,6 +148,8 @@ struct GEMCSCTriggerData
   int LCT_GE1_strip;     int LCT_GE2_strip;
   int LCT_GE1_wiregroup; int LCT_GE2_wiregroup;
 
+  //============ LCT Prop =================//
+  bool has_LCT_match1; bool has_LCT_match2;
 
 };
 
@@ -172,7 +182,11 @@ void GEMCSCTriggerData::init()
 
   //============ Segment Match ============//
   has_segment_match1 = false; has_segment_match2 = false;
-  segment_GE1_residual = value; segment_GE2_residual = value;
+  segment_match_GE1_residual = value; segment_match_GE2_residual = value;
+  segment_match_GE1_LP_x = value; segment_match_GE1_LP_y = value; segment_match_GE1_LP_z = value;
+  segment_match_GE2_LP_x = value; segment_match_GE2_LP_y = value; segment_match_GE2_LP_z = value;
+  segment_match_GE1_GP_x = value; segment_match_GE1_GP_y = value; segment_match_GE1_GP_z = value;
+  segment_match_GE2_GP_x = value; segment_match_GE2_GP_y = value; segment_match_GE2_GP_z = value;
 
   //============ Track Info ===============//
   has_track = false;
@@ -196,7 +210,11 @@ void GEMCSCTriggerData::init()
 
   //============ Track Match ==============//
   has_track_match1 = false; has_track_match2 = false;
-  track_GE1_residual = value; track_GE2_residual = value;
+  track_match_GE1_residual = value; track_match_GE2_residual = value;
+  track_match_GE1_LP_x = value; track_match_GE1_LP_y = value; track_match_GE1_LP_z = value;
+  track_match_GE2_LP_x = value; track_match_GE2_LP_y = value; track_match_GE2_LP_z = value;
+  track_match_GE1_GP_x = value; track_match_GE1_GP_y = value; track_match_GE1_GP_z = value;
+  track_match_GE2_GP_x = value; track_match_GE2_GP_y = value; track_match_GE2_GP_z = value;
 
   //============ LCT Info =================//
   has_LCT = false;
@@ -218,6 +236,7 @@ void GEMCSCTriggerData::init()
   LCT_GE1_strip = value;   LCT_GE2_strip = value;
 
   //============ LCT Match ================//
+  has_LCT_match1 = false; has_LCT_match2 = false;
 
 }
 
@@ -436,8 +455,7 @@ void GEMCSCTriggerTester::startMuonAnalysis(const reco::Muon* mu){
 
     
     matchSegmentTrackLCT();
-    cout << "Finished match seg1? results " << data_.has_segment_match1 << " residual = " << data_.segment_GE1_residual << endl;
-    
+    cout << "Results from matchSegmentTrackLCT S:T:L " << data_.has_segment_match1 << data_.has_segment_match2 << ":" << data_.has_track_match1 << data_.has_track_match2 << ":" << data_.has_LCT_match1 << data_.has_LCT_match2 << endl;
   } 
 }
 
@@ -711,7 +729,7 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
     if (!(gemid.det() == DetId::Detector::Muon && gemid.subdetId() == MuonSubdetId::GEM)) continue;
     const auto& etaPart = GEMGeometry_->etaPartition(gemid);
     LocalPoint hit_LP = hit->localPosition();
-    //GlobalPoint hit_GP = etaPart->toGlobal(hit_LP);
+    GlobalPoint hit_GP = etaPart->toGlobal(hit_LP);
     //Seg Layer 1 Match
     if (data_.has_segment_prop1){
       GEMDetId seg_ge1_id = GEMDetId(data_.segment_GE1_region, data_.segment_GE1_ring, data_.segment_GE1_station, data_.segment_GE1_layer, data_.segment_GE1_chamber, data_.segment_GE1_roll);
@@ -719,7 +737,13 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
         data_.has_segment_match1 = true;
         float new_residual = abs(hit_LP.x() - data_.segment_GE1_LP_x);
         if (new_residual < segment_residual1){
-          data_.segment_GE1_residual = new_residual;
+          data_.segment_match_GE1_residual = new_residual;
+          data_.segment_match_GE1_LP_x = hit_LP.x();
+          data_.segment_match_GE1_LP_y = hit_LP.y();
+          data_.segment_match_GE1_LP_z = hit_LP.z();
+          data_.segment_match_GE1_GP_x = hit_GP.x();
+          data_.segment_match_GE1_GP_y = hit_GP.y();
+          data_.segment_match_GE1_GP_z = hit_GP.z();
         }
       }
     }
@@ -730,7 +754,13 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
         data_.has_segment_match2 = true;
         float new_residual = abs(hit_LP.x() - data_.segment_GE2_LP_x);
         if (new_residual < segment_residual2){
-          data_.segment_GE2_residual = new_residual;
+          data_.segment_match_GE2_residual = new_residual;
+          data_.segment_match_GE2_LP_x = hit_LP.x();
+          data_.segment_match_GE2_LP_y = hit_LP.y();
+          data_.segment_match_GE2_LP_z = hit_LP.z();
+          data_.segment_match_GE2_GP_x = hit_GP.x();
+          data_.segment_match_GE2_GP_y = hit_GP.y();
+          data_.segment_match_GE2_GP_z = hit_GP.z();
         }
       }
     }
@@ -741,7 +771,13 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
         data_.has_track_match1 = true;
         float new_residual = abs(hit_LP.x() - data_.track_GE1_LP_x);
         if (new_residual < track_residual1){
-          data_.track_GE1_residual = new_residual;
+          data_.track_match_GE1_residual = new_residual;
+          data_.track_match_GE1_LP_x = hit_LP.x();
+          data_.track_match_GE1_LP_y = hit_LP.y();
+          data_.track_match_GE1_LP_z = hit_LP.z();
+          data_.track_match_GE1_GP_x = hit_GP.x();
+          data_.track_match_GE1_GP_y = hit_GP.y();
+          data_.track_match_GE1_GP_z = hit_GP.z();
         }
       }
     }
@@ -752,7 +788,13 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
         data_.has_track_match2 = true;
         float new_residual = abs(hit_LP.x() - data_.track_GE2_LP_x);
         if (new_residual < track_residual2){
-          data_.track_GE2_residual = new_residual;
+          data_.track_match_GE2_residual = new_residual;
+          data_.track_match_GE2_LP_x = hit_LP.x();
+          data_.track_match_GE2_LP_y = hit_LP.y();
+          data_.track_match_GE2_LP_z = hit_LP.z();
+          data_.track_match_GE2_GP_x = hit_GP.x();
+          data_.track_match_GE2_GP_y = hit_GP.y();
+          data_.track_match_GE2_GP_z = hit_GP.z();
         }
       }
     }
