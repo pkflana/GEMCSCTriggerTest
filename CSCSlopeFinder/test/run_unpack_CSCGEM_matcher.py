@@ -338,7 +338,7 @@ process.options = cms.untracked.PSet(
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
 
-process.CSCLCTSegmentMatcher = cms.EDAnalyzer('CSCLCTSegmentMatcher',
+process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
 	process.MuonServiceProxy,
 	gemRecHits = cms.InputTag("gemRecHits"),
         muons = cms.InputTag("muons"),
@@ -347,6 +347,6 @@ process.CSCLCTSegmentMatcher = cms.EDAnalyzer('CSCLCTSegmentMatcher',
 	vertexCollection = cms.InputTag("offlinePrimaryVertices"),
         debug = cms.bool(True),
 )
-process.p7 = cms.EndPath(process.CSCLCTSegmentMatcher)
+process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
 
 process.schedule.extend([process.p7])
