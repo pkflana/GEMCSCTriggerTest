@@ -154,6 +154,8 @@ struct GEMCSCTriggerData
   int LCT_match_GE1_pad; int LCT_match_GE2_pad;
   int LCT_match_GE1_BX; int LCT_match_GE2_BX;
   int LCT_match_GE1_padES; int LCT_match_GE2_padES;
+  int LCT_match_GE1_WGMin; int LCT_match_GE2_WGMin;
+  int LCT_match_GE1_WGMax; int LCT_match_GE2_WGMax;
   vector<int> LCT_all_GE1_pads_ES; vector<int> LCT_all_GE2_pads_ES;
   vector<int> LCT_all_GE1_bxs; vector<int> LCT_all_GE2_bxs;
   vector<int> LCT_all_GE1_WGMin; vector<int> LCT_all_GE2_WGMin;
@@ -248,6 +250,8 @@ void GEMCSCTriggerData::init()
   LCT_match_GE1_pad = value; LCT_match_GE2_pad = value;
   LCT_match_GE1_BX = value; LCT_match_GE2_BX = value;
   LCT_match_GE1_padES = value; LCT_match_GE2_padES = value;
+  LCT_match_GE1_WGMin = value; LCT_match_GE2_WGMin = value;
+  LCT_match_GE1_WGMax = value; LCT_match_GE2_WGMax = value;
   LCT_all_GE1_pads_ES.clear(); LCT_all_GE2_pads_ES.clear();
   LCT_all_GE1_bxs.clear(); LCT_all_GE2_bxs.clear();
   LCT_all_GE1_WGMin.clear(); LCT_all_GE2_WGMin.clear();
@@ -294,7 +298,7 @@ TTree* GEMCSCTriggerData::book(TTree *t){
 
 
   //============ LCT Info =================//
-  t->Branch("s_LCT", &has_LCT);
+  t->Branch("has_LCT", &has_LCT);
   t->Branch("LCT_CSC_endcap", &LCT_CSC_endcap); t->Branch("LCT_CSC_station", &LCT_CSC_station);
   t->Branch("LCT_CSC_ring", &LCT_CSC_ring); t->Branch("LCT_CSC_chamber", &LCT_CSC_chamber);
   t->Branch("LCT_CSC_ME1a", &LCT_CSC_ME1a); t->Branch("LCT_CSC_ME1b", &LCT_CSC_ME1b);
@@ -318,6 +322,8 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("LCT_match_GE1_pad", &LCT_match_GE1_pad); t->Branch("LCT_match_GE2_pad", &LCT_match_GE2_pad);
   t->Branch("LCT_match_GE1_BX", &LCT_match_GE1_BX); t->Branch("LCT_match_GE2_BX", &LCT_match_GE2_BX);
   t->Branch("LCT_match_GE1_padES", &LCT_match_GE1_padES); t->Branch("LCT_match_GE2_padES", &LCT_match_GE2_padES);
+  t->Branch("LCT_match_GE1_WGMin", &LCT_match_GE1_WGMin); t->Branch("LCT_match_GE2_WGMin", &LCT_match_GE2_WGMin);
+  t->Branch("LCT_match_GE1_WGMax", &LCT_match_GE1_WGMax); t->Branch("LCT_match_GE2_WGMax", &LCT_match_GE2_WGMax);
   t->Branch("LCT_all_GE1_pads_ES", &LCT_all_GE1_pads_ES); t->Branch("LCT_all_GE2_pads_ES", &LCT_all_GE2_pads_ES);
   t->Branch("LCT_all_GE1_bxs", &LCT_all_GE1_bxs); t->Branch("LCT_all_GE2_bxs", &LCT_all_GE2_bxs);
   t->Branch("LCT_all_GE1_WGMin", &LCT_all_GE1_WGMin); t->Branch("LCT_all_GE2_WGMin", &LCT_all_GE2_WGMin);
@@ -549,7 +555,7 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
   uint16_t RecHitSubDet = RecHitId.subdetId();
   if (RecHitSubDet != (uint16_t)MuonSubdetId::CSC) return;
   CSCDetId SegmentCSCDetId = CSCDetId(RecHitId);
-  if (!(SegmentCSCDetId.station() == 1 and SegmentCSCDetId.ring() == 1 and RecHit->dimension() == 4)) return;
+  if (!(SegmentCSCDetId.station() == 1 and ((SegmentCSCDetId.ring() == 1) or (SegmentCSCDetId.ring() == 4)) and RecHit->dimension() == 4)) return;
   //Found a rechit on Muon Detector, CSC, Station/Ring 1/1, and Segment (dimensions 4)
   RecSegment* Rec_Segment = (RecSegment*)RecHit;
   ME11_Segment = (CSCSegment*)Rec_Segment;
@@ -599,14 +605,14 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
   float SegmentFracStrip = ME11_Layer_Geo->strip(ME11_Segment->localPosition());
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
     CSCDetId LCTDetId = (*j).first;
-    if (!(LCTDetId.station() == 1 and LCTDetId.ring() == 1)) continue;
+    if (!(LCTDetId.station() == 1 and ((LCTDetId.ring() == 1) or (LCTDetId.ring() == 4)))) continue;
     if (!(LCTDetId == SegmentCSCDetId)) continue;
     data_.LCT_CSC_endcap = LCTDetId.endcap();
     data_.LCT_CSC_station = LCTDetId.station();
     data_.LCT_CSC_ring = LCTDetId.ring();
     data_.LCT_CSC_chamber = LCTDetId.chamber();
-    data_.LCT_CSC_ME1a = LCTDetId.isME1a();
-    data_.LCT_CSC_ME1b = LCTDetId.isME1b();
+    //data_.LCT_CSC_ME1a = LCTDetId.isME1a(); //These functions are broken! We must make our own
+    //data_.LCT_CSC_ME1b = LCTDetId.isME1b(); //Will do it at the LCT loop
     if (debug) cout << "Found a LCTDet to SegmentDet Match on Det " << LCTDetId << endl;
     //Loop over LCT Clusters on the Chamber and find best match
     std::vector<CSCCorrelatedLCTDigi>::const_iterator CSCCorrLCT = (*j).second.first;
@@ -626,6 +632,8 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
         data_.LCT_quality = CSCCorrLCT->getQuality();
         data_.LCT_bend = CSCCorrLCT->getBend();
         data_.LCT_BX = CSCCorrLCT->getBX();
+        data_.LCT_CSC_ME1a = (data_.LCT_eighthstrip > 512) ? 1 : 0;
+        data_.LCT_CSC_ME1b = (data_.LCT_eighthstrip < 512) ? 1 : 0;
       }
     }
   }
@@ -636,7 +644,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
   if (debug) cout << "Starting propagateSegmentTrackLCT" << endl;
   //Set up Segment propagation
   DetId segDetId = ME11_Segment->geographicalId();
-  cout << "ME11 Seg at " << CSCDetId(segDetId) << endl;
+  if (debug) cout << "ME11 Seg at " << CSCDetId(segDetId) << endl;
   const GeomDet* segDet = theTrackingGeometry->idToDet(segDetId());
   LocalVector momentum_at_surface = (Track->outerP()) * (ME11_Segment->localDirection());
   LocalTrajectoryParameters param(ME11_Segment->localPosition(), momentum_at_surface, data_.muon_charge);
@@ -647,7 +655,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
 
   //Set up Track propagation
   TrajectoryStateOnSurface TSOS_Track = Track_At_Segment;
-  cout << "Track TSOS? " << TSOS_Track.isValid() << endl;
+  if (debug) cout << "Track TSOS? " << TSOS_Track.isValid() << endl;
 
 
   if (debug) cout << "Found Starting Trajectories ***NOTE Track Local Coords are not the same!!!***" << endl;
@@ -910,12 +918,12 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
   //Even matching window is 20 CSC 8th strips
   //Odd matching window is 40 CSC 8th strips
   //WG matching window is 7 WG
-  if (data_.LCT_quality == 6) cout << "LCT QUALITY 6, CHECKING GEM CHAMBER " << data_.LCT_GE1_region << data_.LCT_GE1_chamber << " HAD STRIP PROP ON " << data_.LCT_GE1_strip << " AND " << data_.LCT_GE2_strip << endl;
+  if (debug and (data_.LCT_quality == 6)) cout << "LCT QUALITY 6, CHECKING GEM CHAMBER " << data_.LCT_GE1_region << data_.LCT_GE1_chamber << " HAD STRIP PROP ON " << data_.LCT_GE1_strip << " AND " << data_.LCT_GE2_strip << endl;
   for (GEMPadDigiClusterCollection::DigiRangeIterator j = gemPadDigis->begin(); j != gemPadDigis->end(); j++){
     GEMDetId GEMPadDigiDetID = (*j).first;
     if ((data_.LCT_GE1_region ==  GEMPadDigiDetID.region()) and (data_.LCT_GE1_station == GEMPadDigiDetID.station()) and (data_.LCT_GE1_ring == GEMPadDigiDetID.ring()) and (data_.LCT_GE1_chamber == GEMPadDigiDetID.chamber()) and (data_.LCT_GE1_layer == GEMPadDigiDetID.layer()) and data_.has_LCT_prop1){
       if (debug) cout << "Found a GEM Digi on correct chamber L1 " << GEMPadDigiDetID << endl;
-      if (data_.LCT_quality == 6) cout << "Dumping all pads for chamber " << GEMPadDigiDetID << " " << endl;
+      if (debug and (data_.LCT_quality == 6)) cout << "Dumping all pads for chamber " << GEMPadDigiDetID << " " << endl;
       //Set up maps
       //int GEMPadToCSCes = 999;
       //int GEMPadMaxWG = 999;
@@ -956,10 +964,12 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
           if ((tmp_delta_es < data_.LCT_match_GE1_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
             data_.has_LCT_match1 = true;
             data_.LCT_match_GE1_residual = tmp_delta_es;
-            cout << "Filled residual with " << tmp_delta_es << endl;
+            if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
             data_.LCT_match_GE1_pad = pad;
             data_.LCT_match_GE1_BX = digiItr->bx();
             data_.LCT_match_GE1_padES = DigiToESMap[pad];
+            data_.LCT_match_GE1_WGMin = WG_Min;
+            data_.LCT_match_GE1_WGMax = WG_Max;
           }
         }
       }
@@ -972,7 +982,7 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
 
     if ((data_.LCT_GE2_region ==  GEMPadDigiDetID.region()) and (data_.LCT_GE2_station == GEMPadDigiDetID.station()) and (data_.LCT_GE2_ring == GEMPadDigiDetID.ring()) and (data_.LCT_GE2_chamber == GEMPadDigiDetID.chamber()) and (data_.LCT_GE2_layer == GEMPadDigiDetID.layer()) and data_.has_LCT_prop2){
       if (debug) cout << "Found a GEM Digi on correct chamber L2 " << GEMPadDigiDetID << endl;
-      if (data_.LCT_quality == 6) cout << "Dumping all pads for chamber " << GEMPadDigiDetID << " " << endl;
+      if (debug and (data_.LCT_quality == 6)) cout << "Dumping all pads for chamber " << GEMPadDigiDetID << " " << endl;
       map<int, int> DigiToESMap;
       map<int, int> WGMaxMap;
       map<int, int> WGMinMap;
@@ -994,7 +1004,7 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       vector<int> tmp_all_L2_WGMax;
       for (; digiItr != last; ++digiItr) {
         for (int pad: digiItr->pads()){
-          if (data_.LCT_quality == 6) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
+          if (debug and (data_.LCT_quality == 6)) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
           int tmp_delta_es = abs(data_.LCT_GE2_strip - DigiToESMap[pad]);
           int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
           int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
@@ -1005,9 +1015,12 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
           if ((tmp_delta_es < data_.LCT_match_GE2_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
             data_.has_LCT_match2 = true;
             data_.LCT_match_GE2_residual = tmp_delta_es;
+            if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
             data_.LCT_match_GE2_pad = pad;
             data_.LCT_match_GE2_BX = digiItr->bx();
             data_.LCT_match_GE2_padES = DigiToESMap[pad];
+            data_.LCT_match_GE2_WGMin = WG_Min;
+            data_.LCT_match_GE2_WGMax = WG_Max;
           }
         }
       }
