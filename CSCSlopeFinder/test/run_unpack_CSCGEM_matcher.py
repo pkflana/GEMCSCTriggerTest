@@ -50,7 +50,7 @@ options.register("runME11ILT", False, VarParsing.multiplicity.singleton, VarPars
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME1/1.")
 options.register("runME21ILT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME2/1.")
-options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("saveEdmOutput", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.register("preTriggerAnalysis", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to print out more details about CLCTs and LCTs in the offline CSC DQM module.")
@@ -345,7 +345,8 @@ process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
 	vertexCollection = cms.InputTag("offlinePrimaryVertices"),
-        debug = cms.bool(True),
+        luts_folder = cms.string("luts"),
+        debug = cms.bool(False),
 )
 process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
 

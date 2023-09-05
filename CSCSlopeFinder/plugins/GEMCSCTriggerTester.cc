@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -76,6 +77,7 @@ struct GEMCSCTriggerData
   bool has_segment;
   int segment_CSC_endcap; int segment_CSC_station; 
   int segment_CSC_ring;   int segment_CSC_chamber;
+  bool segment_CSC_ME1a; bool segment_CSC_ME1b;
   float segment_CSC_LP_x; float segment_CSC_LP_y; float segment_CSC_LP_z;
   float segment_CSC_GP_x; float segment_CSC_GP_y; float segment_CSC_GP_z;
 
@@ -173,6 +175,7 @@ void GEMCSCTriggerData::init()
   has_segment = false;
   segment_CSC_endcap = value; segment_CSC_station = value;
   segment_CSC_ring = value; segment_CSC_chamber = value;
+  segment_CSC_ME1a = false; segment_CSC_ME1b = false;
   segment_CSC_LP_x = value; segment_CSC_LP_y = value; segment_CSC_LP_z = value;
   segment_CSC_GP_x = value; segment_CSC_GP_y = value; segment_CSC_GP_z = value;
 
@@ -270,6 +273,7 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("has_segment", &has_segment);
   t->Branch("segment_CSC_endcap", &segment_CSC_endcap); t->Branch("segment_CSC_station", &segment_CSC_station);
   t->Branch("segment_CSC_ring", &segment_CSC_ring); t->Branch("segment_CSC_chamber", &segment_CSC_chamber);
+  t->Branch("segment_CSC_ME1a", &segment_CSC_ME1a); t->Branch("segment_CSC_ME1b", &segment_CSC_ME1b);
   t->Branch("segment_CSC_LP_x", &segment_CSC_LP_x); t->Branch("segment_CSC_LP_y", &segment_CSC_LP_y); t->Branch("segment_CSC_LP_z", &segment_CSC_LP_z);
   t->Branch("segment_CSC_GP_x", &segment_CSC_GP_x); t->Branch("segment_CSC_GP_y", &segment_CSC_GP_y); t->Branch("segment_CSC_GP_z", &segment_CSC_GP_z);
 
@@ -383,56 +387,78 @@ private:
   const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> geomToken_;
 
   //Maps for the CSC LCT Slope Extrapolation (CSC LCT -> GEM Layers)
+  //Start with a LUTS folder
+  string luts_folder;
   //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
-  string SlopeExtrapolationME11aEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer1.txt";
+  //string SlopeExtrapolationME11aEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer1.txt";
+  string SlopeExtrapolationME11aEvenL1Name;
   map<int, int> SlopeExtrapolationME11aEvenL1_Map;
-  string SlopeExtrapolationME11bEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer1.txt";
+  //string SlopeExtrapolationME11bEvenL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer1.txt";
+  string SlopeExtrapolationME11bEvenL1Name;
   map<int, int> SlopeExtrapolationME11bEvenL1_Map;
-  string SlopeExtrapolationME11aOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer1.txt";
+  //string SlopeExtrapolationME11aOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer1.txt";
+  string SlopeExtrapolationME11aOddL1Name;
   map<int, int> SlopeExtrapolationME11aOddL1_Map;
-  string SlopeExtrapolationME11bOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer1.txt";
+  //string SlopeExtrapolationME11bOddL1Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer1.txt";
+  string SlopeExtrapolationME11bOddL1Name;
   map<int, int> SlopeExtrapolationME11bOddL1_Map;
 
-  string SlopeExtrapolationME11aEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer2.txt";
+  //string SlopeExtrapolationME11aEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer2.txt";
+  string SlopeExtrapolationME11aEvenL2Name;
   map<int, int> SlopeExtrapolationME11aEvenL2_Map;
-  string SlopeExtrapolationME11bEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer2.txt";
+  //string SlopeExtrapolationME11bEvenL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer2.txt";
+  string SlopeExtrapolationME11bEvenL2Name;
   map<int, int> SlopeExtrapolationME11bEvenL2_Map;
-  string SlopeExtrapolationME11aOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer2.txt";
+  //string SlopeExtrapolationME11aOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer2.txt";
+  string SlopeExtrapolationME11aOddL2Name;
   map<int, int> SlopeExtrapolationME11aOddL2_Map;
-  string SlopeExtrapolationME11bOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer2.txt";
+  //string SlopeExtrapolationME11bOddL2Name = "../luts/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer2.txt";
+  string SlopeExtrapolationME11bOddL2Name;
   map<int, int> SlopeExtrapolationME11bOddL2_Map;
 
   //Maps for the GEM Pad Digi Clusters to be converted into CSC eighth strip units
   //Split by Even/Odd, and by ME11a/ME11b (4 cases)
-  string GEMPadDigiToCSCEightStripME11aEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_even.txt";
+  //string GEMPadDigiToCSCEightStripME11aEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_even.txt";
+  string GEMPadDigiToCSCEightStripME11aEvenName;
   map<int, int> GEMPadDigiToCSCEigthStripME11aEven_Map;
-  string GEMPadDigiToCSCEightStripME11bEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_even.txt";
+  //string GEMPadDigiToCSCEightStripME11bEvenName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_even.txt";
+  string GEMPadDigiToCSCEightStripME11bEvenName;
   map<int, int> GEMPadDigiToCSCEigthStripME11bEven_Map;
-  string GEMPadDigiToCSCEightStripME11aOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_odd.txt";
+  //string GEMPadDigiToCSCEightStripME11aOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_odd.txt";
+  string GEMPadDigiToCSCEightStripME11aOddName;
   map<int, int> GEMPadDigiToCSCEigthStripME11aOdd_Map;
-  string GEMPadDigiToCSCEightStripME11bOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_odd.txt";
+  //string GEMPadDigiToCSCEightStripME11bOddName = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_odd.txt";
+  string GEMPadDigiToCSCEightStripME11bOddName;
   map<int, int> GEMPadDigiToCSCEigthStripME11bOdd_Map;
 
   //Maps for the GEM Pad Digi Clusters to be converted into CSC Min and Max WireGroups
   //Split by Even/Odd, Layer1/Layer2, and by Min/Max
-  string GEMPadDigiToCSCWGMinEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_even.txt";
+  //string GEMPadDigiToCSCWGMinEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_even.txt";
+  string GEMPadDigiToCSCWGMinEvenL1Name;
   map<int, int> GEMPadDigiToCSCWGMinEvenL1_Map;
-  string GEMPadDigiToCSCWGMaxEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_even.txt";
+  //string GEMPadDigiToCSCWGMaxEvenL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_even.txt";
+  string GEMPadDigiToCSCWGMaxEvenL1Name;
   map<int, int> GEMPadDigiToCSCWGMaxEvenL1_Map;
 
-  string GEMPadDigiToCSCWGMinOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_odd.txt";
+  //string GEMPadDigiToCSCWGMinOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_odd.txt";
+  string GEMPadDigiToCSCWGMinOddL1Name;
   map<int, int> GEMPadDigiToCSCWGMinOddL1_Map;
-  string GEMPadDigiToCSCWGMaxOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_odd.txt";
+  //string GEMPadDigiToCSCWGMaxOddL1Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_odd.txt";
+  string GEMPadDigiToCSCWGMaxOddL1Name;
   map<int, int> GEMPadDigiToCSCWGMaxOddL1_Map;
 
-  string GEMPadDigiToCSCWGMinEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_even.txt";
+  //string GEMPadDigiToCSCWGMinEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_even.txt";
+  string GEMPadDigiToCSCWGMinEvenL2Name;
   map<int, int> GEMPadDigiToCSCWGMinEvenL2_Map;
-  string GEMPadDigiToCSCWGMaxEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_even.txt";
+  //string GEMPadDigiToCSCWGMaxEvenL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_even.txt";
+  string GEMPadDigiToCSCWGMaxEvenL2Name;
   map<int, int> GEMPadDigiToCSCWGMaxEvenL2_Map;
 
-  string GEMPadDigiToCSCWGMinOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_odd.txt";
+  //string GEMPadDigiToCSCWGMinOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_odd.txt";
+  string GEMPadDigiToCSCWGMinOddL2Name;
   map<int, int> GEMPadDigiToCSCWGMinOddL2_Map;
-  string GEMPadDigiToCSCWGMaxOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_odd.txt";
+  //string GEMPadDigiToCSCWGMaxOddL2Name = "../luts/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_odd.txt";
+  string GEMPadDigiToCSCWGMaxOddL2Name;
   map<int, int> GEMPadDigiToCSCWGMaxOddL2_Map;
 
   //Even matching window is 20 CSC 8th strips
@@ -441,6 +467,8 @@ private:
   int even_delta_es = 20;
   int odd_delta_es = 40;
   int delta_wg = 20;
+
+  int me1a_counter = 0;
 
 };
 
@@ -461,10 +489,48 @@ GEMCSCTriggerTester::GEMCSCTriggerTester(const edm::ParameterSet& iConfig)
   co_token = consumes<CSCCorrelatedLCTDigiCollection>(iConfig.getParameter<edm::InputTag>("corrlctDigiTag"));
   gemdigi_token = consumes<GEMPadDigiClusterCollection>(iConfig.getParameter<edm::InputTag>("gemPadDigiCluster"));
 
+  luts_folder = iConfig.getParameter<string>("luts_folder");
+
   debug = iConfig.getParameter<bool>("debug");
   std::cout << "debug " << debug << std::endl;
 
   tree = data_.book(tree);
+
+
+
+  //Maps for the CSC LCT Slope Extrapolation (CSC LCT -> GEM Layers)
+  //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
+  SlopeExtrapolationME11aEvenL1Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer1.txt";
+  SlopeExtrapolationME11bEvenL1Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer1.txt";
+  SlopeExtrapolationME11aOddL1Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer1.txt";
+  SlopeExtrapolationME11bOddL1Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer1.txt";
+
+  SlopeExtrapolationME11aEvenL2Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_even_GEMlayer2.txt";
+  SlopeExtrapolationME11bEvenL2Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_even_GEMlayer2.txt";
+  SlopeExtrapolationME11aOddL2Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11a_odd_GEMlayer2.txt";
+  SlopeExtrapolationME11bOddL2Name = luts_folder + "/GEMCSC/SlopeCorrection/FacingChambers/ExtrapolationBySlope_ME11b_odd_GEMlayer2.txt";
+
+
+  //Maps for the GEM Pad Digi Clusters to be converted into CSC eighth strip units
+  //Split by Even/Odd, and by ME11a/ME11b (4 cases)
+  GEMPadDigiToCSCEightStripME11aEvenName = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_even.txt";
+  GEMPadDigiToCSCEightStripME11bEvenName = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_even.txt";
+  GEMPadDigiToCSCEightStripME11aOddName = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1a_odd.txt";
+  GEMPadDigiToCSCEightStripME11bOddName = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_pad_es_ME1b_odd.txt";
+
+  //Maps for the GEM Pad Digi Clusters to be converted into CSC Min and Max WireGroups
+  //Split by Even/Odd, Layer1/Layer2, and by Min/Max
+  GEMPadDigiToCSCWGMinEvenL1Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_even.txt";
+  GEMPadDigiToCSCWGMaxEvenL1Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_even.txt";
+
+  GEMPadDigiToCSCWGMinOddL1Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_min_wg_ME11_odd.txt";
+  GEMPadDigiToCSCWGMaxOddL1Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l1_max_wg_ME11_odd.txt";
+
+  GEMPadDigiToCSCWGMinEvenL2Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_even.txt";
+  GEMPadDigiToCSCWGMaxEvenL2Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_even.txt";
+
+  GEMPadDigiToCSCWGMinOddL2Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_min_wg_ME11_odd.txt";
+  GEMPadDigiToCSCWGMaxOddL2Name = luts_folder + "/GEMCSC/CoordinateConversion/GEMCSCLUT_roll_l2_max_wg_ME11_odd.txt";
 
 }
 
@@ -572,6 +638,8 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
   data_.segment_CSC_station = SegmentCSCDetId.station();
   data_.segment_CSC_ring = SegmentCSCDetId.ring();
   data_.segment_CSC_chamber = SegmentCSCDetId.chamber();
+  data_.segment_CSC_ME1a = SegmentCSCDetId.ring() == 4;
+  data_.segment_CSC_ME1b = SegmentCSCDetId.ring() == 1;
   data_.segment_CSC_LP_x = ME11_Segment_LP.x();
   data_.segment_CSC_LP_y = ME11_Segment_LP.y();
   data_.segment_CSC_LP_z = ME11_Segment_LP.z();
@@ -602,11 +670,12 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
   if (debug) cout << "Track   LP : GP " << Track_At_Segment_LP << " : " << Track_At_Segment_LP << endl;
 
   //Prepare FracStrips for LCT Matching
-  float SegmentFracStrip = ME11_Layer_Geo->strip(ME11_Segment->localPosition());
+  float SegmentFracStripME1a = ME11_Layer_Geo->strip(ME11_Segment->localPosition()) + 64;
+  float SegmentFracStripME1b = ME11_Layer_Geo->strip(ME11_Segment->localPosition());
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
     CSCDetId LCTDetId = (*j).first;
     if (!(LCTDetId.station() == 1 and ((LCTDetId.ring() == 1) or (LCTDetId.ring() == 4)))) continue;
-    if (!(LCTDetId == SegmentCSCDetId)) continue;
+    if (!(LCTDetId.chamber() == SegmentCSCDetId.chamber())) continue;  //Segment is still using Ring == 4 for ME1a, but the LCT is not! Cannot set DetID equal to eachother
     data_.LCT_CSC_endcap = LCTDetId.endcap();
     data_.LCT_CSC_station = LCTDetId.station();
     data_.LCT_CSC_ring = LCTDetId.ring();
@@ -619,14 +688,19 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
     std::vector<CSCCorrelatedLCTDigi>::const_iterator last = (*j).second.second;
     CSCCorrelatedLCTDigi LCTDigiMatch = CSCCorrelatedLCTDigi();
     for (; CSCCorrLCT != last; ++CSCCorrLCT){
+      me1a_counter = me1a_counter + 1;
       float LCTFracStrip = CSCCorrLCT->getFractionalStrip();
+      //Match near the ME1a/b border
+      float SegmentFracStrip = (abs(SegmentFracStripME1a - LCTFracStrip) < abs(SegmentFracStripME1b - LCTFracStrip) ) ? SegmentFracStripME1a : SegmentFracStripME1b; 
+      if (data_.segment_CSC_ME1a == 1) cout << "DEBUGGING ME1A, SEGMENT - LCT " << SegmentFracStrip << " - " << LCTFracStrip << endl;
+
       if (abs(SegmentFracStrip - LCTFracStrip) < abs(SegmentFracStrip - LCTDigiMatch.getFractionalStrip())){
         //This is the best LCT Match so far
         LCTDigiMatch = *CSCCorrLCT;
         data_.has_LCT = true;
         if (debug) cout << "Found a matching LCT (checking for better one), residual = " << abs(SegmentFracStrip - LCTFracStrip) << endl;
         data_.LCT_eighthstrip = (CSCCorrLCT->getStrip())*4 + (CSCCorrLCT->getQuartStripBit())*2 + (CSCCorrLCT->getEighthStripBit());
-        data_.LCT_segment_residual = abs(SegmentFracStrip - LCTFracStrip);
+        data_.LCT_segment_residual = SegmentFracStrip - LCTFracStrip;
         data_.LCT_slope = CSCCorrLCT->getSlope();
         data_.LCT_wiregroup = CSCCorrLCT->getKeyWG();
         data_.LCT_quality = CSCCorrLCT->getQuality();
@@ -666,7 +740,8 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
   for (const auto& ch : GEMGeometry_->etaPartitions()){
     if (!(ch->id().station() == 1 and ch->id().ring() == 1)) continue; //Only look at GE1/1
     CSCDetId SegmentDetId = CSCDetId(segDetId);
-    if (!(((SegmentDetId.endcap() == 2 and ch->id().region() == -1) or (SegmentDetId.endcap() == 1 and ch->id().region() == 1)) and (SegmentDetId.station() == ch->id().station()) and (SegmentDetId.ring() == ch->id().ring()) and (SegmentDetId.chamber() == ch->id().chamber()))) continue; //Only look at same detector as segment
+    //if (!(((SegmentDetId.endcap() == 2 and ch->id().region() == -1) or (SegmentDetId.endcap() == 1 and ch->id().region() == 1)) and (SegmentDetId.station() == ch->id().station()) and (SegmentDetId.ring() == ch->id().ring()) and (SegmentDetId.chamber() == ch->id().chamber()))) continue; //Only look at same detector as segment
+    if (!(((SegmentDetId.endcap() == 2 and ch->id().region() == -1) or (SegmentDetId.endcap() == 1 and ch->id().region() == 1)) and (SegmentDetId.station() == ch->id().station()) and (SegmentDetId.chamber() == ch->id().chamber()))) continue; //Only look at same detector as segment, cannot use ring for ME1a/b cut differences
     if (debug) cout << "Found same chamber as segment " << ch->id() << " and " << SegmentDetId << endl;
     bool good_segment_prop = false;
     const BoundPlane& bps(ch->surface());
@@ -850,8 +925,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       GEMDetId seg_ge1_id = GEMDetId(data_.segment_GE1_region, data_.segment_GE1_ring, data_.segment_GE1_station, data_.segment_GE1_layer, data_.segment_GE1_chamber, data_.segment_GE1_roll);
       if ((gemid.station() == seg_ge1_id.station() and gemid.chamber() == seg_ge1_id.chamber() and gemid.layer() == seg_ge1_id.layer() and abs(gemid.roll() - seg_ge1_id.roll()) <= 1 and gemid.region() == seg_ge1_id.region())){
         data_.has_segment_match1 = true;
-        float new_residual = abs(hit_LP.x() - data_.segment_GE1_LP_x);
-        if (new_residual < segment_residual1){
+        float new_residual = hit_LP.x() - data_.segment_GE1_LP_x;
+        if (abs(new_residual) < abs(segment_residual1)){
           data_.segment_match_GE1_residual = new_residual;
           data_.segment_match_GE1_LP_x = hit_LP.x();
           data_.segment_match_GE1_LP_y = hit_LP.y();
@@ -867,8 +942,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       GEMDetId seg_ge2_id = GEMDetId(data_.segment_GE2_region, data_.segment_GE2_ring, data_.segment_GE2_station, data_.segment_GE2_layer, data_.segment_GE2_chamber, data_.segment_GE2_roll);
       if ((gemid.station() == seg_ge2_id.station() and gemid.chamber() == seg_ge2_id.chamber() and gemid.layer() == seg_ge2_id.layer() and abs(gemid.roll() - seg_ge2_id.roll()) <= 1 and gemid.region() == seg_ge2_id.region())){
         data_.has_segment_match2 = true;
-        float new_residual = abs(hit_LP.x() - data_.segment_GE2_LP_x);
-        if (new_residual < segment_residual2){
+        float new_residual = hit_LP.x() - data_.segment_GE2_LP_x;
+        if (abs(new_residual) < abs(segment_residual2)){
           data_.segment_match_GE2_residual = new_residual;
           data_.segment_match_GE2_LP_x = hit_LP.x();
           data_.segment_match_GE2_LP_y = hit_LP.y();
@@ -884,8 +959,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       GEMDetId tra_ge1_id = GEMDetId(data_.track_GE1_region, data_.track_GE1_ring, data_.track_GE1_station, data_.track_GE1_layer, data_.track_GE1_chamber, data_.track_GE1_roll);
       if ((gemid.station() == tra_ge1_id.station() and gemid.chamber() == tra_ge1_id.chamber() and gemid.layer() == tra_ge1_id.layer() and abs(gemid.roll() - tra_ge1_id.roll()) <= 1 and gemid.region() == tra_ge1_id.region())){
         data_.has_track_match1 = true;
-        float new_residual = abs(hit_LP.x() - data_.track_GE1_LP_x);
-        if (new_residual < track_residual1){
+        float new_residual = hit_LP.x() - data_.track_GE1_LP_x;
+        if (abs(new_residual) < abs(track_residual1)){
           data_.track_match_GE1_residual = new_residual;
           data_.track_match_GE1_LP_x = hit_LP.x();
           data_.track_match_GE1_LP_y = hit_LP.y();
@@ -901,8 +976,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       GEMDetId tra_ge2_id = GEMDetId(data_.track_GE2_region, data_.track_GE2_ring, data_.track_GE2_station, data_.track_GE2_layer, data_.track_GE2_chamber, data_.track_GE2_roll);
       if ((gemid.station() == tra_ge2_id.station() and gemid.chamber() == tra_ge2_id.chamber() and gemid.layer() == tra_ge2_id.layer() and abs(gemid.roll() - tra_ge2_id.roll()) <= 1 and gemid.region() == tra_ge2_id.region())){
         data_.has_track_match2 = true;
-        float new_residual = abs(hit_LP.x() - data_.track_GE2_LP_x);
-        if (new_residual < track_residual2){
+        float new_residual = hit_LP.x() - data_.track_GE2_LP_x;
+        if (abs(new_residual) < abs(track_residual2)){
           data_.track_match_GE2_residual = new_residual;
           data_.track_match_GE2_LP_x = hit_LP.x();
           data_.track_match_GE2_LP_y = hit_LP.y();
@@ -953,15 +1028,15 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
           //Now finally, lets check if it is a match
           //Pad/Strip check -- abs(LCT_to_GEM*_eighth_strip - GEMPadToCSCes) < *_delta_es
           //WG/Eta check -- (GEMPadMinWG - delta_wg) < GEMPadDigiDetID.roll() < (GEMPadMaxWG + delta_wg)
-          if (data_.LCT_quality == 6) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
-          int tmp_delta_es = abs(data_.LCT_GE1_strip - DigiToESMap[pad]);
+          if (debug and data_.LCT_quality == 6) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
+          int tmp_delta_es = data_.LCT_GE1_strip - DigiToESMap[pad];
           int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
           int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
           tmp_all_L1_pads.push_back(DigiToESMap[pad]);
           tmp_all_L1_bxs.push_back(digiItr->bx());
           tmp_all_L1_WGMin.push_back(WG_Min);
           tmp_all_L1_WGMax.push_back(WG_Max);
-          if ((tmp_delta_es < data_.LCT_match_GE1_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+          if ((abs(tmp_delta_es) < abs(data_.LCT_match_GE1_residual)) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
             data_.has_LCT_match1 = true;
             data_.LCT_match_GE1_residual = tmp_delta_es;
             if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
@@ -1005,19 +1080,20 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       for (; digiItr != last; ++digiItr) {
         for (int pad: digiItr->pads()){
           if (debug and (data_.LCT_quality == 6)) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
-          int tmp_delta_es = abs(data_.LCT_GE2_strip - DigiToESMap[pad]);
+          int tmp_delta_es = data_.LCT_GE2_strip - DigiToESMap[pad];
           int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
           int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
           tmp_all_L2_pads.push_back(DigiToESMap[pad]);
           tmp_all_L2_bxs.push_back(digiItr->bx());
           tmp_all_L2_WGMin.push_back(WG_Min);
           tmp_all_L2_WGMax.push_back(WG_Max);
-          if ((tmp_delta_es < data_.LCT_match_GE2_residual) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+          if ((abs(tmp_delta_es) < abs(data_.LCT_match_GE2_residual)) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
             data_.has_LCT_match2 = true;
             data_.LCT_match_GE2_residual = tmp_delta_es;
             if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
             data_.LCT_match_GE2_pad = pad;
             data_.LCT_match_GE2_BX = digiItr->bx();
+            cout << "Digi to ES is " << DigiToESMap[pad] << endl;
             data_.LCT_match_GE2_padES = DigiToESMap[pad];
             data_.LCT_match_GE2_WGMin = WG_Min;
             data_.LCT_match_GE2_WGMax = WG_Max;
@@ -1086,7 +1162,18 @@ void GEMCSCTriggerTester::beginJob(){
 
   cout << "Created all LUTs" << endl;
   cout << "Ended Begin Job, starting Event Loop" << endl;
+  cout << "Counting all ME1a, starting at " << me1a_counter << endl;
+  cout << "Current path is " << std::filesystem::current_path() << endl;
+  for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::current_path())) {
+    std::cout << entry.path() << std::endl;
+  }
+  cout << "One behind is " << endl;
+  for (const auto & entry : std::filesystem::directory_iterator("../")) {
+    std::cout << entry.path() << std::endl;
+  }
 }
-void GEMCSCTriggerTester::endJob(){}
+void GEMCSCTriggerTester::endJob(){
+  cout << "Found " << me1a_counter << " ME1a" << endl;
+}
 
 DEFINE_FWK_MODULE(GEMCSCTriggerTester);

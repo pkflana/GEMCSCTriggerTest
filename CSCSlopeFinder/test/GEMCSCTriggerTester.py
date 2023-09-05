@@ -64,7 +64,8 @@ process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
 	vertexCollection = cms.InputTag("offlinePrimaryVertices"),
-        debug = cms.bool(True),
+        luts_folder = cms.string("../luts"),
+        debug = cms.bool(False),
 )
 
 process.p = cms.Path(process.GEMCSCTriggerTester)
