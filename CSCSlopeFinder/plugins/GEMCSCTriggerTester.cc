@@ -163,6 +163,7 @@ struct GEMCSCTriggerData
   vector<int> LCT_all_GE1_bxs; vector<int> LCT_all_GE2_bxs;
   vector<int> LCT_all_GE1_WGMin; vector<int> LCT_all_GE2_WGMin;
   vector<int> LCT_all_GE1_WGMax; vector<int> LCT_all_GE2_WGMax;
+  int LCT_slope_with_GE1; int LCT_slope_with_GE2;
 };
 
 void GEMCSCTriggerData::init()
@@ -261,6 +262,7 @@ void GEMCSCTriggerData::init()
   LCT_all_GE1_bxs.clear(); LCT_all_GE2_bxs.clear();
   LCT_all_GE1_WGMin.clear(); LCT_all_GE2_WGMin.clear();
   LCT_all_GE1_WGMax.clear(); LCT_all_GE2_WGMax.clear();
+  LCT_slope_with_GE1 = value; LCT_slope_with_GE2 = value;
 }
 
 TTree* GEMCSCTriggerData::book(TTree *t){
@@ -335,6 +337,7 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("LCT_all_GE1_bxs", &LCT_all_GE1_bxs); t->Branch("LCT_all_GE2_bxs", &LCT_all_GE2_bxs);
   t->Branch("LCT_all_GE1_WGMin", &LCT_all_GE1_WGMin); t->Branch("LCT_all_GE2_WGMin", &LCT_all_GE2_WGMin);
   t->Branch("LCT_all_GE1_WGMax", &LCT_all_GE1_WGMax); t->Branch("LCT_all_GE2_WGMax", &LCT_all_GE2_WGMax);
+  t->Branch("LCT_slope_with_GE1", &LCT_slope_with_GE1); t->Branch("LCT_slope_with_GE2", &LCT_slope_with_GE2);
   return t;
 }
 
@@ -449,6 +452,29 @@ private:
   string GEMAlignmentCorrectionsNegativeName;
   map<int, int> GEMAlignmentCorrectionsNegative_Map;
 
+
+  //Maps for the CSC LCT Slope Adjustment (CSC LCT Slope -> Slope with GEM)
+  //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
+  string SlopeAmendmentME11aEvenL1Name;
+  map<int, int> SlopeAmendmentME11aEvenL1_Map;
+  string SlopeAmendmentME11bEvenL1Name;
+  map<int, int> SlopeAmendmentME11bEvenL1_Map;
+  string SlopeAmendmentME11aOddL1Name;
+  map<int, int> SlopeAmendmentME11aOddL1_Map;
+  string SlopeAmendmentME11bOddL1Name;
+  map<int, int> SlopeAmendmentME11bOddL1_Map;
+
+  string SlopeAmendmentME11aEvenL2Name;
+  map<int, int> SlopeAmendmentME11aEvenL2_Map;
+  string SlopeAmendmentME11bEvenL2Name;
+  map<int, int> SlopeAmendmentME11bEvenL2_Map;
+  string SlopeAmendmentME11aOddL2Name;
+  map<int, int> SlopeAmendmentME11aOddL2_Map;
+  string SlopeAmendmentME11bOddL2Name;
+  map<int, int> SlopeAmendmentME11bOddL2_Map;
+
+
+
   //Even matching window is 20 CSC 8th strips
   //Odd matching window is 40 CSC 8th strips
   //WG matching window is 7 WG
@@ -524,6 +550,20 @@ GEMCSCTriggerTester::GEMCSCTriggerTester(const edm::ParameterSet& iConfig)
   //Split by +/- endcap
   GEMAlignmentCorrectionsPositiveName = luts_folder + "/GEMCSC/AlignmentCorrection/GEMCSCLUT_align_corr_es_ME11_positive_endcap.txt";
   GEMAlignmentCorrectionsNegativeName = luts_folder + "/GEMCSC/AlignmentCorrection/GEMCSCLUT_align_corr_es_ME11_negative_endcap.txt";
+
+  //Maps for the CSC LCT Slope Adjustment (CSC LCT Slope -> Slope with GEM)
+  //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
+  SlopeAmendmentME11aEvenL1Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11a_even_GEMlayer1.txt";
+  SlopeAmendmentME11bEvenL1Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11b_even_GEMlayer1.txt";
+  SlopeAmendmentME11aOddL1Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11a_odd_GEMlayer1.txt";
+  SlopeAmendmentME11bOddL1Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11b_odd_GEMlayer1.txt";
+
+  SlopeAmendmentME11aEvenL2Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11a_even_GEMlayer2.txt";
+  SlopeAmendmentME11bEvenL2Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11b_even_GEMlayer2.txt";
+  SlopeAmendmentME11aOddL2Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11a_odd_GEMlayer2.txt";
+  SlopeAmendmentME11bOddL2Name = luts_folder + "/GEMCSC/BendingAngle/SlopeAmendment_ME11b_odd_GEMlayer2.txt";
+
+
 
 
 }
@@ -999,6 +1039,7 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       map<int, int> DigiToESMap;
       map<int, int> WGMaxMap;
       map<int, int> WGMinMap;
+      map<int, int> SlopeAmendMap;
       //Lets include Alignment Corrections (GEMAlignmentCorrectionsPositive_Map)
       //Measured with GEMHit - PropHit, so we can add alignment corr to the prop
       //To use AlignCorr map, we have AlignCorrMap[chEta]
@@ -1007,9 +1048,11 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
 
       if (data_.LCT_CSC_ME1a){
         DigiToESMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11aEven_Map : GEMPadDigiToCSCEigthStripME11aOdd_Map;
+        SlopeAmendMap = (data_.LCT_GE1_chamber%2 == 0) ? SlopeAmendmentME11aEvenL1_Map : SlopeAmendmentME11aOddL1_Map;
       }
       if (data_.LCT_CSC_ME1b){
         DigiToESMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11bEven_Map : GEMPadDigiToCSCEigthStripME11bOdd_Map;
+        SlopeAmendMap = (data_.LCT_GE1_chamber%2 == 0) ? SlopeAmendmentME11bEvenL1_Map : SlopeAmendmentME11bOddL1_Map;
       }
       WGMinMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMinEvenL1_Map : GEMPadDigiToCSCWGMinOddL1_Map;
       WGMaxMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMaxEvenL1_Map : GEMPadDigiToCSCWGMaxOddL1_Map;
@@ -1054,6 +1097,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
             data_.LCT_match_GE1_padES = DigiToESMap[pad];
             data_.LCT_match_GE1_WGMin = WG_Min;
             data_.LCT_match_GE1_WGMax = WG_Max;
+
+            data_.LCT_slope_with_GE1 = SlopeAmendMap[abs(DigiToESMap[pad] - data_.LCT_eighthstrip)]*pow(-1.0, (DigiToESMap[pad] - data_.LCT_eighthstrip) < 0);
           }
         }
       }
@@ -1071,6 +1116,7 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       map<int, int> DigiToESMap;
       map<int, int> WGMaxMap;
       map<int, int> WGMinMap;
+      map<int, int> SlopeAmendMap;
       //Lets include Alignment Corrections (GEMAlignmentCorrectionsPositive_Map)
       //Measured with GEMHit - PropHit, so we can add alignment corr to the prop
       //To use AlignCorr map, we have AlignCorrMap[chEta]
@@ -1078,9 +1124,11 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
       int AlignCorrKey = GEMPadDigiDetID.chamber() * 10 + GEMPadDigiDetID.roll();
       if (data_.LCT_CSC_ME1a){
         DigiToESMap = (data_.LCT_GE2_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11aEven_Map : GEMPadDigiToCSCEigthStripME11aOdd_Map;
+        SlopeAmendMap = (data_.LCT_GE2_chamber%2 == 0) ? SlopeAmendmentME11aEvenL2_Map : SlopeAmendmentME11aOddL2_Map;
       }
       if (data_.LCT_CSC_ME1b){
         DigiToESMap = (data_.LCT_GE2_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11bEven_Map : GEMPadDigiToCSCEigthStripME11bOdd_Map;
+        SlopeAmendMap = (data_.LCT_GE2_chamber%2 == 0) ? SlopeAmendmentME11bEvenL2_Map : SlopeAmendmentME11bOddL2_Map;
       }
       WGMinMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMinEvenL2_Map : GEMPadDigiToCSCWGMinOddL2_Map;
       WGMaxMap = (data_.LCT_GE1_chamber%2 == 0) ? GEMPadDigiToCSCWGMaxEvenL2_Map : GEMPadDigiToCSCWGMaxOddL2_Map;
@@ -1121,6 +1169,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
             data_.LCT_match_GE2_padES = DigiToESMap[pad];
             data_.LCT_match_GE2_WGMin = WG_Min;
             data_.LCT_match_GE2_WGMax = WG_Max;
+
+            data_.LCT_slope_with_GE2 = SlopeAmendMap[abs(DigiToESMap[pad] - data_.LCT_eighthstrip)]*pow(-1.0, (DigiToESMap[pad] - data_.LCT_eighthstrip) < 0);
           }
         }
       }
@@ -1140,11 +1190,13 @@ void GEMCSCTriggerTester::fillMap(map<int, int>& thisMap, string filename){
   thisFile.open(filename);
   if (thisFile.is_open()){
     while(getline(thisFile, line)){
+      if (line.at(0) == '#') continue;
       int key = atoi(line.substr(0, line.find(delimiter)).c_str());
       int value = atoi(line.substr(line.find(delimiter), -1).c_str());
-      if (!((key == 0) and (value == 0))){
-        thisMap[key] = value;
-      }
+      //if (!((key == 0) and (value == 0))){
+      //  thisMap[key] = value;
+      //}
+      thisMap[key] = value;
     }
   }
 }
@@ -1187,17 +1239,21 @@ void GEMCSCTriggerTester::beginJob(){
   fillMap(GEMAlignmentCorrectionsPositive_Map, GEMAlignmentCorrectionsPositiveName);
   fillMap(GEMAlignmentCorrectionsNegative_Map, GEMAlignmentCorrectionsNegativeName);
 
+  fillMap(SlopeAmendmentME11aEvenL1_Map, SlopeAmendmentME11aEvenL1Name);
+  fillMap(SlopeAmendmentME11aEvenL2_Map, SlopeAmendmentME11aEvenL2Name);
+
+  fillMap(SlopeAmendmentME11bEvenL1_Map, SlopeAmendmentME11bEvenL1Name);
+  fillMap(SlopeAmendmentME11bEvenL2_Map, SlopeAmendmentME11bEvenL2Name);
+
+  fillMap(SlopeAmendmentME11aOddL1_Map, SlopeAmendmentME11aOddL1Name);
+  fillMap(SlopeAmendmentME11aOddL2_Map, SlopeAmendmentME11aOddL2Name);
+
+  fillMap(SlopeAmendmentME11bOddL1_Map, SlopeAmendmentME11bOddL1Name);
+  fillMap(SlopeAmendmentME11bOddL2_Map, SlopeAmendmentME11bOddL2Name);
+
   cout << "Created all LUTs" << endl;
   cout << "Ended Begin Job, starting Event Loop" << endl;
   cout << "Counting all ME1a, starting at " << me1a_counter << endl;
-  cout << "Current path is " << std::filesystem::current_path() << endl;
-  for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::current_path())) {
-    std::cout << entry.path() << std::endl;
-  }
-  cout << "One behind is " << endl;
-  for (const auto & entry : std::filesystem::directory_iterator("../")) {
-    std::cout << entry.path() << std::endl;
-  }
 }
 void GEMCSCTriggerTester::endJob(){
   cout << "Found " << me1a_counter << " ME1a" << endl;
