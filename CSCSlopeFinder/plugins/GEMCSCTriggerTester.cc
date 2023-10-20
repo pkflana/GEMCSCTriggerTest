@@ -70,16 +70,20 @@ struct GEMCSCTriggerData
   void init();
   TTree* book(TTree *t);
   //============ Muon Info ================//
-  int muon_charge; float muon_pt; float muon_eta;
+  int muon_charge; float muon_pt; float muon_eta; float muon_phi; float muon_energy;
   unsigned long long evtNum; unsigned long long lumiBlock; int runNum;
 
   //============ Segment Info =============//
-  bool has_segment;
+  bool has_segment; bool has_segment_ME31;
   int segment_CSC_endcap; int segment_CSC_station; 
   int segment_CSC_ring;   int segment_CSC_chamber;
   bool segment_CSC_ME1a; bool segment_CSC_ME1b;
   float segment_CSC_LP_x; float segment_CSC_LP_y; float segment_CSC_LP_z;
   float segment_CSC_GP_x; float segment_CSC_GP_y; float segment_CSC_GP_z;
+  float segment_CSC_Ldir_x; float segment_CSC_Ldir_y; float segment_CSC_Ldir_z;
+  float segment_CSC_slope_angle;
+  float segment_CSC_nRecHits; float segment_CSC_chi2;
+  int segment_CSC_strip; int segment_CSC_WG;
 
   //============ Segment Prop =============//
   bool has_segment_prop1;  bool has_segment_prop2;
@@ -104,10 +108,12 @@ struct GEMCSCTriggerData
 
   //============ Track Info ===============//
   bool has_track;
+  float track_chi2;
   int track_CSC_endcap; int track_CSC_station;
   int track_CSC_ring;   int track_CSC_chamber;
   float track_CSC_LP_x; float track_CSC_LP_y; float track_CSC_LP_z;
   float track_CSC_GP_x; float track_CSC_GP_y; float track_CSC_GP_z;
+  float track_CSC_Ldir_x; float track_CSC_Ldir_y; float track_CSC_Ldir_z;
 
   //============ Track Prop ===============//
   bool has_track_prop1;  bool has_track_prop2;
@@ -139,6 +145,7 @@ struct GEMCSCTriggerData
   int LCT_eighthstrip;   int LCT_slope;
   int LCT_wiregroup;     int LCT_quality;
   int LCT_bend;          int LCT_BX;
+  int LCT_trknum;
 
   //============ LCT Prop =================//
   bool has_LCT_prop1;    bool has_LCT_prop2;
@@ -170,16 +177,20 @@ void GEMCSCTriggerData::init()
 {
   //=========== Muon Info ===============//
   float value = 99999;
-  muon_charge = value; muon_pt = value; muon_eta = value;
+  muon_charge = value; muon_pt = value; muon_eta = value; muon_phi = value; muon_energy = value;
   evtNum = value; lumiBlock = value; runNum = value;
 
   //============ Segment Info =============//
-  has_segment = false;
+  has_segment = false; has_segment_ME31 = false;
   segment_CSC_endcap = value; segment_CSC_station = value;
   segment_CSC_ring = value; segment_CSC_chamber = value;
   segment_CSC_ME1a = false; segment_CSC_ME1b = false;
   segment_CSC_LP_x = value; segment_CSC_LP_y = value; segment_CSC_LP_z = value;
   segment_CSC_GP_x = value; segment_CSC_GP_y = value; segment_CSC_GP_z = value;
+  segment_CSC_Ldir_x = value; segment_CSC_Ldir_y = value; segment_CSC_Ldir_z = value;
+  segment_CSC_slope_angle = value;
+  segment_CSC_nRecHits = value; segment_CSC_chi2 = value;
+  segment_CSC_strip = value; segment_CSC_WG = value;
 
   //============ Segment Prop =============//
   has_segment_prop1 = false;   has_segment_prop2 = false;
@@ -204,10 +215,12 @@ void GEMCSCTriggerData::init()
 
   //============ Track Info ===============//
   has_track = false;
+  track_chi2 = value;
   track_CSC_endcap = value; track_CSC_station = value;
   track_CSC_ring = value; track_CSC_chamber = value;
   track_CSC_LP_x = value; track_CSC_LP_y = value; track_CSC_LP_z = value;
   track_CSC_GP_x = value; track_CSC_GP_y = value; track_CSC_GP_z = value;
+  track_CSC_Ldir_x = value; track_CSC_Ldir_y = value; track_CSC_Ldir_z = value;
 
   //============ Track Prop ===============//
   has_track_prop1 = false; has_track_prop2 = false;
@@ -239,6 +252,7 @@ void GEMCSCTriggerData::init()
   LCT_eighthstrip = value; LCT_slope = value;
   LCT_wiregroup = value; LCT_quality = value;
   LCT_bend = value; LCT_BX = value;
+  LCT_trknum = value;
 
   //============ LCT Prop =================//
   has_LCT_prop1 = false; has_LCT_prop2 = false;
@@ -270,16 +284,20 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t = fs->make<TTree>("GEM_CSC_Trigger", "GEM_CSC_Trigger");
 
   //=========== Muon Info =============//
-  t->Branch("muon_charge", &muon_charge); t->Branch("muon_pt", &muon_pt); t->Branch("muon_eta", &muon_eta);
+  t->Branch("muon_charge", &muon_charge); t->Branch("muon_pt", &muon_pt); t->Branch("muon_eta", &muon_eta); t->Branch("muon_phi", &muon_phi); t->Branch("muon_energy", &muon_energy);
   t->Branch("evtNum", &evtNum); t->Branch("lumiBlock", &lumiBlock); t->Branch("runNum", &runNum);
 
   //============ Segment Info =============//
-  t->Branch("has_segment", &has_segment);
+  t->Branch("has_segment", &has_segment); t->Branch("has_segment_ME31", &has_segment_ME31);
   t->Branch("segment_CSC_endcap", &segment_CSC_endcap); t->Branch("segment_CSC_station", &segment_CSC_station);
   t->Branch("segment_CSC_ring", &segment_CSC_ring); t->Branch("segment_CSC_chamber", &segment_CSC_chamber);
   t->Branch("segment_CSC_ME1a", &segment_CSC_ME1a); t->Branch("segment_CSC_ME1b", &segment_CSC_ME1b);
   t->Branch("segment_CSC_LP_x", &segment_CSC_LP_x); t->Branch("segment_CSC_LP_y", &segment_CSC_LP_y); t->Branch("segment_CSC_LP_z", &segment_CSC_LP_z);
   t->Branch("segment_CSC_GP_x", &segment_CSC_GP_x); t->Branch("segment_CSC_GP_y", &segment_CSC_GP_y); t->Branch("segment_CSC_GP_z", &segment_CSC_GP_z);
+  t->Branch("segment_CSC_LDir_x", &segment_CSC_Ldir_x); t->Branch("segment_CSC_LDir_y", &segment_CSC_Ldir_y); t->Branch("segment_CSC_LDir_z", &segment_CSC_Ldir_z);
+  t->Branch("segment_CSC_slope_angle", &segment_CSC_slope_angle);
+  t->Branch("segment_CSC_nRecHits", &segment_CSC_nRecHits); t->Branch("segment_CSC_chi2", &segment_CSC_chi2);
+  t->Branch("segment_CSC_strip", &segment_CSC_strip); t->Branch("segment_CSC_WG", &segment_CSC_WG);
 
   //============ Segment Prop =============//
   t->Branch("has_segment_prop1", &has_segment_prop1); t->Branch("has_segment_prop2", &has_segment_prop2);
@@ -294,6 +312,7 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("segment_GE1_GP_x", &segment_GE1_GP_x); t->Branch("segment_GE1_GP_y", &segment_GE1_GP_y); t->Branch("segment_GE1_GP_z", &segment_GE1_GP_z);
   t->Branch("segment_GE2_GP_x", &segment_GE2_GP_x); t->Branch("segment_GE2_GP_y", &segment_GE2_GP_y); t->Branch("segment_GE2_GP_z", &segment_GE2_GP_z);
 
+
   //============ Segment Match ============//
   t->Branch("has_segment_match1", &has_segment_match1); t->Branch("has_segment_match2", &has_segment_match2);
   t->Branch("segment_match_GE1_residual", &segment_match_GE1_residual); t->Branch("segment_match_GE2_residual", &segment_match_GE2_residual);
@@ -303,6 +322,14 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("segment_match_GE2_GP_x", &segment_match_GE2_GP_x); t->Branch("segment_match_GE2_GP_y", &segment_match_GE2_GP_y); t->Branch("segment_match_GE2_GP_z", &segment_match_GE2_GP_z);
 
 
+  //============ Track Info ===============//
+  t->Branch("has_track", &has_track);
+  t->Branch("track_chi2", &track_chi2);
+  t->Branch("track_CSC_endcap", &track_CSC_endcap); t->Branch("track_CSC_station", &track_CSC_station);
+  t->Branch("track_CSC_ring", &track_CSC_ring); t->Branch("track_CSC_chamber", &track_CSC_chamber);
+  t->Branch("track_CSC_LP_x", &track_CSC_LP_x); t->Branch("track_CSC_LP_y", &track_CSC_LP_y); t->Branch("track_CSC_LP_z", &track_CSC_LP_z);
+  t->Branch("track_CSC_GP_x", &track_CSC_GP_x); t->Branch("track_CSC_GP_y", &track_CSC_GP_y); t->Branch("track_CSC_GP_z", &track_CSC_GP_z);
+  t->Branch("track_CSC_LDir_x", &track_CSC_Ldir_x); t->Branch("track_CSC_LDir_y", &track_CSC_Ldir_y); t->Branch("track_CSC_LDir_z", &track_CSC_Ldir_z);
 
 
   //============ LCT Info =================//
@@ -314,6 +341,7 @@ TTree* GEMCSCTriggerData::book(TTree *t){
   t->Branch("LCT_eighthstrip", &LCT_eighthstrip); t->Branch("LCT_slope", &LCT_slope);
   t->Branch("LCT_wiregroup", &LCT_wiregroup); t->Branch("LCT_quality", &LCT_quality);
   t->Branch("LCT_bend", &LCT_bend); t->Branch("LCT_BX", &LCT_BX);
+  t->Branch("LCT_trknum", &LCT_trknum);
 
   //============ LCT Prop =================//
   t->Branch("has_LCT_prop1", &has_LCT_prop1); t->Branch("has_LCT_prop2", &has_LCT_prop2);
@@ -353,7 +381,7 @@ private:
 
   void startMuonAnalysis(const reco::Muon* mu);
   void findSegmentTrackLCT(const TrackingRecHit* RecHit, const reco::Track* Track, CSCSegment*& ME11_Segment, TrajectoryStateOnSurface& Track_At_Segment);
-  void propagateSegmentTrackLCT(const reco::Track* Track, CSCSegment* ME11_Segment, TrajectoryStateOnSurface Track_At_Segment, TrajectoryStateOnSurface& TSOS_Segment_On_GE1, TrajectoryStateOnSurface& TSOS_Segment_On_GE2, TrajectoryStateOnSurface& TSOS_Track_On_GE1, TrajectoryStateOnSurface& TSOS_Track_On_GE2);
+  void propagateSegmentTrackLCT(const reco::Track* Track, CSCSegment* ME11_Segment, TrajectoryStateOnSurface Track_At_Segment);
   void matchSegmentTrackLCT();
 
   void fillMap(map<int, int>& thisMap, string filename);
@@ -380,6 +408,7 @@ private:
   edm::ESHandle<GEMGeometry> GEMGeometry_;
   edm::ESHandle<CSCGeometry> CSCGeometry_;
 
+  bool use_alignment;
   bool debug;
 
   GEMCSCTriggerData data_;
@@ -505,6 +534,7 @@ GEMCSCTriggerTester::GEMCSCTriggerTester(const edm::ParameterSet& iConfig)
 
   luts_folder = iConfig.getParameter<string>("luts_folder");
 
+  use_alignment = iConfig.getParameter<bool>("alignment");
   debug = iConfig.getParameter<bool>("debug");
   std::cout << "debug " << debug << std::endl;
 
@@ -597,6 +627,7 @@ GEMCSCTriggerTester::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   if (debug) cout << "New Event" << endl;
 
+  std::cout << "Nmuons = " << muons->size() << std::endl;
 
   for (size_t i = 0; i < muons->size(); ++i){
     edm::RefToBase<reco::Muon> muRef = muons->refAt(i);
@@ -621,21 +652,20 @@ void GEMCSCTriggerTester::startMuonAnalysis(const reco::Muon* mu){
     data_.init();
     data_.muon_charge = mu->charge();
     data_.muon_pt = mu->pt();
+    data_.muon_eta = mu->eta();
+    data_.muon_phi = mu->phi();
+    data_.muon_energy = mu->energy();
     const TrackingRecHit* RecHit = (Track->recHit(RecHit_iter)).get();
 
     CSCSegment* ME11_Segment;
     TrajectoryStateOnSurface Track_At_Segment = TrajectoryStateOnSurface();
 
     findSegmentTrackLCT(RecHit, Track, ME11_Segment, Track_At_Segment);
-    if ((!data_.has_segment) or (!data_.has_track) or (!data_.has_LCT)) continue;
+    if (not ((data_.has_segment) or (data_.has_track) or (data_.has_LCT))) continue;
     if (debug) cout << "Results of findSegmentTrackLCT S:T:L " << data_.has_segment << ":" << data_.has_track << ":" << data_.has_LCT << endl;
 
-    TrajectoryStateOnSurface TSOS_Segment_On_GE1 = TrajectoryStateOnSurface();
-    TrajectoryStateOnSurface TSOS_Segment_On_GE2 = TrajectoryStateOnSurface();
-    TrajectoryStateOnSurface TSOS_Track_On_GE1 = TrajectoryStateOnSurface();
-    TrajectoryStateOnSurface TSOS_Track_On_GE2 = TrajectoryStateOnSurface();
 
-    propagateSegmentTrackLCT(Track, ME11_Segment, Track_At_Segment, TSOS_Segment_On_GE1, TSOS_Segment_On_GE2, TSOS_Track_On_GE1, TSOS_Track_On_GE2);
+    propagateSegmentTrackLCT(Track, ME11_Segment, Track_At_Segment);
     //if (!(data_.has_segment_prop1 or data_.has_segment_prop2)) continue;
     if (debug) cout << "Results from propagateSegmentTrackLCT S:T:L " << data_.has_segment_prop1 << data_.has_segment_prop2 << ":" << data_.has_track_prop1 << data_.has_track_prop2 << ":" << data_.has_LCT_prop1 << data_.has_LCT_prop2 << endl;
 
@@ -680,28 +710,58 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
   data_.segment_CSC_GP_x = ME11_Segment_GP.x();
   data_.segment_CSC_GP_y = ME11_Segment_GP.y();
   data_.segment_CSC_GP_z = ME11_Segment_GP.z();
+  LocalVector ME11_Segment_LDir = ME11_Segment->localDirection();
+  data_.segment_CSC_Ldir_x = ME11_Segment_LDir.x();
+  data_.segment_CSC_Ldir_y = ME11_Segment_LDir.y();
+  data_.segment_CSC_Ldir_z = ME11_Segment_LDir.z();
+  data_.segment_CSC_slope_angle = atan(data_.segment_CSC_Ldir_x/data_.segment_CSC_Ldir_z);
+  data_.segment_CSC_nRecHits = ME11_Segment->nRecHits();
+  data_.segment_CSC_chi2 = ME11_Segment->chi2();
+  data_.segment_CSC_strip = ME11_Layer_Geo->nearestStrip(ME11_Segment->localPosition());
+  data_.segment_CSC_WG = ME11_Layer_Geo->nearestWire(ME11_Segment->localPosition());
   if (debug) cout << "Found an ME11 Segment" << endl;
+
+  //Check if the track also had a ME3/1 segment! Filters our soft scattered muons
+  bool has_ME31 = false;
+  for (size_t RecHit_iter = 0; RecHit_iter != Track->recHitsSize(); RecHit_iter++){
+    const TrackingRecHit* RecHit_ME31 = (Track->recHit(RecHit_iter)).get();
+    DetId RecHitId_ME31 = RecHit_ME31->geographicalId();
+    uint16_t RecHitDetId_ME31 = RecHitId_ME31.det();
+    if (RecHitDetId_ME31 != DetId::Muon) continue;
+    uint16_t RecHitSubDet_ME31 = RecHitId_ME31.subdetId();
+    if (RecHitSubDet_ME31 != (uint16_t)MuonSubdetId::CSC) continue;
+    CSCDetId SegmentCSCDetId_ME31 = CSCDetId(RecHitId_ME31);
+    if (SegmentCSCDetId_ME31.station() == 3 and SegmentCSCDetId_ME31.ring() == 1 and RecHit_ME31->dimension() == 4) has_ME31 = true;
+    //Found a rechit on Muon Detector, CSC, Station/Ring 3/1, and Segment (dimensions 4) 
+  }
+  data_.has_segment_ME31 = has_ME31;
+
 
   //Find the Track at this Segment Position
   Track_At_Segment = TTrack.stateOnSurface(ME11_Segment_GP);
-  if (!(Track_At_Segment.isValid())) return;
-
-  GlobalPoint Track_At_Segment_GP = Track_At_Segment.globalPosition();
-  LocalPoint Track_At_Segment_LP = ME11_Layer->toLocal(Track_At_Segment_GP);
-  data_.has_track = true;
-  data_.track_CSC_endcap = SegmentCSCDetId.endcap();
-  data_.track_CSC_station = SegmentCSCDetId.station();
-  data_.track_CSC_ring = SegmentCSCDetId.ring();
-  data_.track_CSC_chamber = SegmentCSCDetId.chamber();
-  data_.track_CSC_LP_x = Track_At_Segment_GP.x();
-  data_.track_CSC_LP_y = Track_At_Segment_GP.y();
-  data_.track_CSC_LP_z = Track_At_Segment_GP.z();
-  data_.track_CSC_GP_x = Track_At_Segment_GP.x();
-  data_.track_CSC_GP_y = Track_At_Segment_GP.y();
-  data_.track_CSC_GP_z = Track_At_Segment_GP.z();
-  if (debug) cout << "Found a matching Track" << endl;
-  if (debug) cout << "Segment LP : GP " << ME11_Segment_LP << " : " << ME11_Segment_GP << endl;
-  if (debug) cout << "Track   LP : GP " << Track_At_Segment_LP << " : " << Track_At_Segment_LP << endl;
+  if ((Track_At_Segment.isValid())){
+    GlobalPoint Track_At_Segment_GP = Track_At_Segment.globalPosition();
+    LocalPoint Track_At_Segment_LP = ME11_Layer->toLocal(Track_At_Segment_GP);
+    data_.has_track = true;
+    data_.track_chi2 = Track->chi2();
+    data_.track_CSC_endcap = SegmentCSCDetId.endcap();
+    data_.track_CSC_station = SegmentCSCDetId.station();
+    data_.track_CSC_ring = SegmentCSCDetId.ring();
+    data_.track_CSC_chamber = SegmentCSCDetId.chamber();
+    data_.track_CSC_LP_x = Track_At_Segment_GP.x();
+    data_.track_CSC_LP_y = Track_At_Segment_GP.y();
+    data_.track_CSC_LP_z = Track_At_Segment_GP.z();
+    data_.track_CSC_GP_x = Track_At_Segment_GP.x();
+    data_.track_CSC_GP_y = Track_At_Segment_GP.y();
+    data_.track_CSC_GP_z = Track_At_Segment_GP.z();
+    LocalVector Track_At_Segment_LDir = Track_At_Segment.localDirection();
+    data_.track_CSC_Ldir_x = Track_At_Segment_LDir.x();
+    data_.track_CSC_Ldir_y = Track_At_Segment_LDir.y();
+    data_.track_CSC_Ldir_z = Track_At_Segment_LDir.z();
+    if (debug) cout << "Found a matching Track" << endl;
+    if (debug) cout << "Segment LP : GP " << ME11_Segment_LP << " : " << ME11_Segment_GP << endl;
+    if (debug) cout << "Track   LP : GP " << Track_At_Segment_LP << " : " << Track_At_Segment_LP << endl;
+  }
 
   //Prepare FracStrips for LCT Matching
   float SegmentFracStripME1a = ME11_Layer_Geo->strip(ME11_Segment->localPosition()) + 64;
@@ -741,13 +801,14 @@ void GEMCSCTriggerTester::findSegmentTrackLCT(const TrackingRecHit* RecHit, cons
         data_.LCT_BX = CSCCorrLCT->getBX();
         data_.LCT_CSC_ME1a = (data_.LCT_eighthstrip > 512) ? 1 : 0;
         data_.LCT_CSC_ME1b = (data_.LCT_eighthstrip < 512) ? 1 : 0;
+        data_.LCT_trknum = CSCCorrLCT->getTrknmb();
       }
     }
   }
 }
 
 
-void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSCSegment* ME11_Segment, TrajectoryStateOnSurface Track_At_Segment, TrajectoryStateOnSurface& TSOS_Segment_On_GE1, TrajectoryStateOnSurface& TSOS_Segment_On_GE2, TrajectoryStateOnSurface& TSOS_Track_On_GE1, TrajectoryStateOnSurface& TSOS_Track_On_GE2){
+void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSCSegment* ME11_Segment, TrajectoryStateOnSurface Track_At_Segment){
   if (debug) cout << "Starting propagateSegmentTrackLCT" << endl;
   //Set up Segment propagation
   DetId segDetId = ME11_Segment->geographicalId();
@@ -766,8 +827,8 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
 
 
   if (debug) cout << "Found Starting Trajectories ***NOTE Track Local Coords are not the same!!!***" << endl;
-  if (debug) cout << "Seg TSOS   LP : GP : LocalDir " << TSOS_Segment.localPosition() << " : " << TSOS_Segment.globalPosition() << " : " << TSOS_Segment.localDirection() << endl;
-  if (debug) cout << "Track TSOS LP : GP : LocalDir " << TSOS_Track.localPosition() << " : " << TSOS_Track.globalPosition() << " : " << TSOS_Track.localDirection() << endl;
+  if (debug and data_.has_segment) cout << "Seg TSOS   LP : GP : LocalDir " << TSOS_Segment.localPosition() << " : " << TSOS_Segment.globalPosition() << " : " << TSOS_Segment.localDirection() << endl;
+  if (debug and data_.has_track) cout << "Track TSOS LP : GP : LocalDir " << TSOS_Track.localPosition() << " : " << TSOS_Track.globalPosition() << " : " << TSOS_Track.localDirection() << endl;
 
   auto propagator = theService_->propagator("SteppingHelixPropagatorAny");
   for (const auto& ch : GEMGeometry_->etaPartitions()){
@@ -778,23 +839,30 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
     if (debug) cout << "Found same chamber as segment " << ch->id() << " and " << SegmentDetId << endl;
     bool good_segment_prop = false;
     const BoundPlane& bps(ch->surface());
-    TrajectoryStateOnSurface TSOS_Segment_On_GEM = propagator->propagate(TSOS_Segment, ch->surface());
-    if (TSOS_Segment_On_GEM.isValid()){
-      const GlobalPoint Prop_GEM_GP = TSOS_Segment_On_GEM.globalPosition();
-      const LocalPoint Prop_GEM_LP = TSOS_Segment_On_GEM.localPosition();
-      const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
-      if (((TSOS_Segment.globalPosition().z() * Prop_GEM_GP.z()) > 0.0) and (bps.bounds().inside(Prop_GEM_LP_2D))){
-        good_segment_prop = true;
+    TrajectoryStateOnSurface TSOS_Segment_On_GEM = TrajectoryStateOnSurface();
+    if (data_.has_segment){
+      const BoundPlane& bps(ch->surface());
+      TSOS_Segment_On_GEM = propagator->propagate(TSOS_Segment, ch->surface());
+      if (TSOS_Segment_On_GEM.isValid()){
+        const GlobalPoint Prop_GEM_GP = TSOS_Segment_On_GEM.globalPosition();
+        const LocalPoint Prop_GEM_LP = TSOS_Segment_On_GEM.localPosition();
+        const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
+        if (((TSOS_Segment.globalPosition().z() * Prop_GEM_GP.z()) > 0.0) and (bps.bounds().inside(Prop_GEM_LP_2D))){
+          good_segment_prop = true;
+        }
       }
     }
     bool good_track_prop = false;
-    TrajectoryStateOnSurface TSOS_Track_On_GEM = propagator->propagate(TSOS_Track, ch->surface());
-    if (TSOS_Track_On_GEM.isValid()){
-      const GlobalPoint Prop_GEM_GP = TSOS_Track_On_GEM.globalPosition();
-      const LocalPoint Prop_GEM_LP = TSOS_Track_On_GEM.localPosition();
-      const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
-      if (((TSOS_Track.globalPosition().z() * Prop_GEM_GP.z()) > 0.0) and (bps.bounds().inside(Prop_GEM_LP_2D))){
-        good_track_prop = true;
+    TrajectoryStateOnSurface TSOS_Track_On_GEM = TrajectoryStateOnSurface();
+    if (data_.has_track){
+      TSOS_Track_On_GEM = propagator->propagate(TSOS_Track, ch->surface());
+      if (TSOS_Track_On_GEM.isValid()){
+        const GlobalPoint Prop_GEM_GP = TSOS_Track_On_GEM.globalPosition();
+        const LocalPoint Prop_GEM_LP = TSOS_Track_On_GEM.localPosition();
+        const LocalPoint Prop_GEM_LP_2D(Prop_GEM_LP.x(), Prop_GEM_LP.y(), 0.0);
+        if (((TSOS_Track.globalPosition().z() * Prop_GEM_GP.z()) > 0.0) and (bps.bounds().inside(Prop_GEM_LP_2D))){
+          good_track_prop = true;
+        }
       }
     }
     if (debug) cout << "Finished Seg/Track props, got Seg:Tra " << good_segment_prop << ":" << good_track_prop << endl;
@@ -811,7 +879,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
       GlobalPoint Segment_On_GEM_GP = TSOS_Segment_On_GEM.globalPosition();
       if (ch_layer == 1){
         data_.has_segment_prop1 = true;
-        TSOS_Segment_On_GE1 = TSOS_Segment_On_GEM;
+        TrajectoryStateOnSurface TSOS_Segment_On_GE1 = TSOS_Segment_On_GEM;
         if (debug) cout << "Found segprop at L1 LP/GP " << TSOS_Segment_On_GEM.localPosition() << "/" << TSOS_Segment_On_GEM.globalPosition() << endl;
         data_.segment_GE1_region = ch_region;
         data_.segment_GE1_station = ch_station;
@@ -828,7 +896,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
       }
       if (ch_layer == 2){
         data_.has_segment_prop2 = true;
-        TSOS_Segment_On_GE2 = TSOS_Segment_On_GEM;
+        TrajectoryStateOnSurface TSOS_Segment_On_GE2 = TSOS_Segment_On_GEM;
         if (debug) cout << "Found segprop at L2 LP/GP " << TSOS_Segment_On_GEM.localPosition() << "/" << TSOS_Segment_On_GEM.globalPosition() << endl;
         data_.segment_GE2_region = ch_region;
         data_.segment_GE2_station = ch_station;
@@ -849,7 +917,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
       GlobalPoint Track_On_GEM_GP = TSOS_Track_On_GEM.globalPosition();
       if (ch_layer == 1){
         data_.has_track_prop1 = true;
-        TSOS_Track_On_GE1 = TSOS_Track_On_GEM;
+        TrajectoryStateOnSurface TSOS_Track_On_GE1 = TSOS_Track_On_GEM;
         if (debug) cout << "Found traprop at L1 LP/GP " << TSOS_Track_On_GEM.localPosition() << "/" << TSOS_Track_On_GEM.globalPosition() << endl;
         data_.track_GE1_region = ch_region;
         data_.track_GE1_station = ch_station;
@@ -866,7 +934,7 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
       }
       if (ch_layer == 2){
         data_.has_track_prop2 = true;
-        TSOS_Track_On_GE2 = TSOS_Track_On_GEM;
+        TrajectoryStateOnSurface TSOS_Track_On_GE2 = TSOS_Track_On_GEM;
         if (debug) cout << "Found traprop at L2 LP/GP " << TSOS_Track_On_GEM.localPosition() << "/" << TSOS_Track_On_GEM.globalPosition() << endl;
         data_.track_GE2_region = ch_region;
         data_.track_GE2_station = ch_station;
@@ -907,7 +975,6 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
   int LCTToGEML2EighthStrip = LCT_eighth_strip - slope_propagationL2*((LCT_bend*2)-1); //This is stupid ):
   if (debug) cout << "LCT Prop from " << LCT_eighth_strip << " to L1 " << LCTToGEML1EighthStrip << " and L2 " << LCTToGEML2EighthStrip << endl;
 
-
   int window_es = (data_.LCT_CSC_chamber%2 == 0) ? even_delta_es : odd_delta_es;
   int strip_start = 999;
   int strip_end = 999;
@@ -936,7 +1003,6 @@ void GEMCSCTriggerTester::propagateSegmentTrackLCT(const reco::Track* Track, CSC
     data_.LCT_GE2_chamber = data_.LCT_CSC_chamber;
     data_.LCT_GE2_layer = 2;
     data_.LCT_GE2_strip = LCTToGEML2EighthStrip;
-
   }
 }
 
@@ -1079,8 +1145,11 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
           //WG/Eta check -- (GEMPadMinWG - delta_wg) < GEMPadDigiDetID.roll() < (GEMPadMaxWG + delta_wg)
           if (debug and data_.LCT_quality == 6) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
 
-          int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] * (-1.0) : AlignCorrMap[AlignCorrKey];
-          int tmp_delta_es = data_.LCT_GE1_strip - DigiToESMap[pad] + align_corr_tmp;
+          //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] * (-1.0) : AlignCorrMap[AlignCorrKey];
+          //int align_corr_tmp = AlignCorrMap[AlignCorrKey]; //For now we show alignment needs the flip
+          int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0);
+          if (use_alignment == false) align_corr_tmp = 0;
+          int tmp_delta_es = data_.LCT_GE1_strip - (DigiToESMap[pad] + align_corr_tmp);
           int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
           int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
           tmp_all_L1_pads.push_back(DigiToESMap[pad]);
@@ -1098,7 +1167,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
             data_.LCT_match_GE1_WGMin = WG_Min;
             data_.LCT_match_GE1_WGMax = WG_Max;
 
-            data_.LCT_slope_with_GE1 = SlopeAmendMap[abs(DigiToESMap[pad] - data_.LCT_eighthstrip)]*pow(-1.0, (DigiToESMap[pad] - data_.LCT_eighthstrip) < 0);
+            data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
+
           }
         }
       }
@@ -1151,8 +1221,11 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
         int adjustedBX = digiBX + CSCConstants_LCT_CENTRAL_BX - int(tmbL1aWindowSize/2.0) - digiALCTMatch + delayGEMinOTMB;
         for (int pad: digiItr->pads()){
           if (debug and (data_.LCT_quality == 6)) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
-          int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] * (-1.0) : AlignCorrMap[AlignCorrKey];
-          int tmp_delta_es = data_.LCT_GE2_strip - DigiToESMap[pad] + align_corr_tmp;
+          //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] * (-1.0) : AlignCorrMap[AlignCorrKey];
+          //int align_corr_tmp = AlignCorrMap[AlignCorrKey]; //For now we show alignment needs the flip
+          int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0);
+          if (use_alignment == false) align_corr_tmp = 0;
+          int tmp_delta_es = data_.LCT_GE2_strip - (DigiToESMap[pad] + align_corr_tmp);
           int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
           int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
           tmp_all_L2_pads.push_back(DigiToESMap[pad]);
@@ -1170,7 +1243,8 @@ void GEMCSCTriggerTester::matchSegmentTrackLCT(){
             data_.LCT_match_GE2_WGMin = WG_Min;
             data_.LCT_match_GE2_WGMax = WG_Max;
 
-            data_.LCT_slope_with_GE2 = SlopeAmendMap[abs(DigiToESMap[pad] - data_.LCT_eighthstrip)]*pow(-1.0, (DigiToESMap[pad] - data_.LCT_eighthstrip) < 0);
+            data_.LCT_slope_with_GE2 = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
+
           }
         }
       }

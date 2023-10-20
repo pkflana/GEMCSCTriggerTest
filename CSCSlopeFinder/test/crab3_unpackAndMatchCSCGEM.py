@@ -3,8 +3,8 @@ from CRABClient.UserUtilities import config
 config = config()
 ###2018runA  314472-318876
 #section general
-config.General.requestName = '2023D_Run370293_4Sep2023_v4'
-config.General.workArea = '2023D_Run370293_4Sep2023'#working dir 
+config.General.requestName = '2023D_Run370293_16Oct2023_Zmu'
+config.General.workArea = '2023D_Run370293_16Oct2023_Zmu'#working dir 
 config.General.transferOutputs = True
 config.General.transferLogs = True
 
@@ -22,6 +22,7 @@ config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_13_0
 
 
 config.Data.inputDataset = '/Muon1/Run2023D-ZMu-PromptReco-v1/RAW-RECO'
+#config.Data.inputDataset = '/ZeroBias/Run2023D-LogError-PromptReco-v1/RAW-RECO'
 config.Data.runRange = '370293'
 
 #config.Data.inputDBS = 'phys03'
@@ -30,9 +31,9 @@ config.Data.splitting = 'FileBased'
 #config.Data.splitting = 'LumiBased'
 #config.Data.splitting = 'Automatic'
 config.Data.unitsPerJob = 10
-config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2023D_Run370293_4Sep2023/'
+config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2023D_Run370293_Zmu/'
 config.Data.publication = False
 config.Data.outputDatasetTag = config.General.requestName
-config.Site.storageSite = 'T3_US_FNALLPC'
-#config.Site.storageSite = 'T3_CH_CERNBOX'
+#config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.storageSite = 'T3_CH_CERNBOX'
 config.Site.ignoreGlobalBlacklist = True
