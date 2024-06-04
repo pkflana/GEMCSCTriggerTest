@@ -93,7 +93,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 
 process.options = cms.untracked.PSet(
-      SkipEvent = cms.untracked.vstring('ProductNotFound')
+      TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
 process.source = cms.Source(
@@ -119,7 +119,7 @@ else:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
       if options.run3:
             #process.GlobalTag = GlobalTag(process.GlobalTag, '112X_dataRun3_Prompt_v5', '')
-            process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+            process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_HLT_v3', '')
 
 ## running on unpacked data, or after running the unpacker
 if not options.mc or options.unpack:
@@ -133,31 +133,31 @@ if useB904Data:
       process.muonCSCDigis.DisableMappingCheck = True
       process.muonCSCDigis.B904Setup = True
       process.muonCSCDigis.InputObjects = "rawDataCollectorCSC"
-      
+
       if options.useB904ME11:
-      
+
         if options.useB904ME11PositiveEndcap + options.useB904ME11NegativeEndcap == 2:
             print("Choose at most one between useB904ME11PositiveEndcap and useB904ME11NegativeEndcap!")
         elif options.useB904ME11NegativeEndcap: # Set manually the VME crate number for ME-1/1/02
             process.muonCSCDigis.B904vmecrate = 31
         else: # Set manually the VME crate number for ME+1/1/02
             process.muonCSCDigis.B904vmecrate = 1
-            
+
         if options.useB904GE11Short + options.useB904GE11Long == 2:
             print("Choose at most one between useB904GE11Short and useB904GE11Long!")
         elif options.useB904GE11Short: # Set manually the DMB slot for ME+-1/1/01
             process.muonCSCDigis.B904dmb = 2
         else: # Set manually the DMB slot for ME+-1/1/02
             process.muonCSCDigis.B904dmb = 3
-      
+
       elif options.useB904ME21: # Set manually the VME crate number and default DMB for ME+2/1/01
           process.muonCSCDigis.B904vmecrate = 18
           process.muonCSCDigis.B904dmb = 3
-      
+
       elif options.useB904ME234s2: # Set manually the VME crate number and default DMB for ME+4/2/01
           process.muonCSCDigis.B904vmecrate = 30
           process.muonCSCDigis.B904dmb = 9
-          
+
       else: # Set manually the VME crate number and default DMB for ME+1/1/02
           process.muonCSCDigis.B904vmecrate = 1
           process.muonCSCDigis.B904dmb = 3
@@ -333,7 +333,7 @@ process.schedule.extend([process.p6])
 outfile = "out_unpackLCAT_test.root"
 
 process.options = cms.untracked.PSet(
-                        SkipEvent = cms.untracked.vstring('ProductNotFound')
+                        TryToContinue = cms.untracked.vstring('ProductNotFound')
                         )
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
