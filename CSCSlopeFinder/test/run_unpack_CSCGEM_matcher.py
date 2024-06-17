@@ -217,11 +217,34 @@ if options.dqmGEM:
       process.l1tdeGEMTPG.emul = "simMuonGEMPadDigiClusters"
 
 # Output
+"""
 process.output = cms.OutputModule(
     "PoolOutputModule",
       outputCommands = cms.untracked.vstring(
-            ['keep *',
-             'drop *_rawDataCollector_*_*',
+            [#'keep *',
+             #'drop *_rawDataCollector_*_*',
+             'drop *',
+             'keep cscTriggerPrimitiveDigis',
+             'keep muonCSCDigis',
+             'keep muonCSCDigis',
+             'keep cscSegments',
+             'keep gemRecHits',
+             'keep muons',
+      ]),
+      fileName = cms.untracked.string("lcts2.root"),
+)
+"""
+
+process.output = cms.OutputModule(
+    "PoolOutputModule",
+      outputCommands = cms.untracked.vstring(
+            ['drop *',
+             'keep *_cscTriggerPrimitiveDigis__L1CSCTPG',
+             'keep *_muonCSCDigis_MuonCSCCorrelatedLCTDigi_L1CSCTPG',
+             'keep *_muonCSCDigis_MuonGEMPadDigiCluster_L1CSCTPG',
+             'keep *_cscSegments_*_RECO',
+             'keep *_gemRecHits_*_RECO',
+             'keep *_muons__RECO',
       ]),
       fileName = cms.untracked.string("lcts2.root"),
 )
