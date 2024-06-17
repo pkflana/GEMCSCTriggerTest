@@ -14,9 +14,9 @@ options.register("selectedChambers", "", VarParsing.multiplicity.list, VarParsin
                  "Chambers you want to explicitly mask.")
 options.register("unpackGEM", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to unpack the GEM DAQ data.")
-options.register("l1", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("l1", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to re-emulate the CSC trigger primitives.")
-options.register("l1GEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("l1GEM", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to re-emulate the GEM trigger primitives.")
 options.register("mc", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running on MC.")
@@ -42,15 +42,15 @@ options.register('useB904GE11Long',False,VarParsing.multiplicity.singleton,VarPa
                  "Set to True when using data from GE1/1 Long super chamber in B904.")
 options.register("run3", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using Run-3 data.")
-options.register("runCCLUTOTMB", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("runCCLUTOTMB", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using the CCLUT OTMB algorithm.")
 options.register("runCCLUTTMB", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using the CCLUT TMB algorithm.")
-options.register("runME11ILT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("runME11ILT", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME1/1.")
 options.register("runME21ILT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME2/1.")
-options.register("saveEdmOutput", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.register("preTriggerAnalysis", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to print out more details about CLCTs and LCTs in the offline CSC DQM module.")
@@ -336,7 +336,8 @@ process.options = cms.untracked.PSet(
                         TryToContinue = cms.untracked.vstring('ProductNotFound')
                         )
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
+#process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
+process.TFileService = cms.Service("TFileService", fileName = cms.string(options.outputFile))
 
 process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
 	process.MuonServiceProxy,
