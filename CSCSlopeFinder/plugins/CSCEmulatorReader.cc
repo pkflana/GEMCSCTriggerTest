@@ -175,6 +175,7 @@ CSCEmulatorReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       cout << "Bend          " << digiItr->getBend() << endl;
       cout << "Run2 Pattern: " << digiItr->getPattern() << endl;
       cout << "Run3 Pattern: " << digiItr->getRun3Pattern() << endl;
+      cout << "Quality       " << digiItr->getQuality() << endl;
     }
   }
 }

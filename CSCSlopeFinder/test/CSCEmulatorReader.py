@@ -48,14 +48,17 @@ process.source = cms.Source("PoolSource",
 			)
 				)
 
-outfile = "out_LCT_test.root"
-process.source.fileNames.append("file:lcts2_withGEM.root")
+#outfile = "out_LCT_test.root"
+#process.source.fileNames.append("file:lcts2_withGEM.root")
+
 
 process.options = cms.untracked.PSet(
       TryToContinue = cms.untracked.vstring('ProductNotFound')
 )
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
+#process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
+process.TFileService = cms.Service("TFileService", fileName = cms.string(options.outputFile))
+
 
 process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader', 
 	process.MuonServiceProxy,
