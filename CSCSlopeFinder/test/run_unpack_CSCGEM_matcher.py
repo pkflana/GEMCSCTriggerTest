@@ -54,7 +54,7 @@ options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarPa
                  "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.register("preTriggerAnalysis", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to print out more details about CLCTs and LCTs in the offline CSC DQM module.")
-options.register("dropNonMuonCollections", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("dropNonMuonCollections", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Option to drop most non-muon collections generally considered unnecessary for GEM/CSC analysis")
 options.register("dqmOutputFile", "step_DQM.root", VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Name of the DQM output file. Default: step_DQM.root")
@@ -245,6 +245,7 @@ process.output = cms.OutputModule(
              'keep *_cscSegments_*_RECO',
              'keep *_gemRecHits_*_RECO',
              'keep *_muons__RECO',
+             'keep *Track*_*_*_RECO',
       ]),
       fileName = cms.untracked.string("lcts2.root"),
 )
@@ -376,3 +377,17 @@ process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
 process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
 
 process.schedule.extend([process.p7])
+
+
+process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader', 
+	process.MuonServiceProxy,
+        muons = cms.InputTag("muons"),
+        emu_corrlctDigiTag = cms.InputTag("cscTriggerPrimitiveDigis"),
+        debug = cms.bool(False),
+)
+
+process.p8 = cms.EndPath(process.CSCEmulatorReader)
+
+process.schedule.extend([process.p8])
+
+#print(process.dumpPython())
