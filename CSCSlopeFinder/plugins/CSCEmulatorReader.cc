@@ -67,28 +67,48 @@ struct EmuData
 {
   void init();
   TTree* book(TTree *t);
-  //============ Muon Info ================//
-  int muon_charge; float muon_pt; float muon_eta;
-  unsigned long long evtNum; unsigned long long lumiBlock; int runNum;
+  //============ LCT Info ================//
+  int LCT_slope;
+  int LCT_quality;
+  int LCT_strip;
+  int LCT_wiregroup;
+  int LCT_bend;
+
+  float muon_pt;
+  float muon_charge;
+  float muon_LCT_distance;
+
 
 };
 
 void EmuData::init()
 {
-  //=========== Muon Info ===============//
-  float value = 99999;
-  muon_charge = value; muon_pt = value; muon_eta = value;
-  evtNum = value; lumiBlock = value; runNum = value;
+  //=========== LCT Info ===============//
+  LCT_slope = -999;
+  LCT_quality = -999;
+  LCT_strip = -999;
+  LCT_wiregroup = -999;
+  LCT_bend = -999;
 
+  muon_pt = -999.0;
+  muon_charge = -999.0;
+  muon_LCT_distance = -999.0;
 }
 
 TTree* EmuData::book(TTree *t){
   edm::Service< TFileService > fs;
   t = fs->make<TTree>("EmuData", "EmuData");
 
-  //=========== Muon Info =============//
-  t->Branch("muon_charge", &muon_charge); t->Branch("muon_pt", &muon_pt); t->Branch("muon_eta", &muon_eta);
-  t->Branch("evtNum", &evtNum); t->Branch("lumiBlock", &lumiBlock); t->Branch("runNum", &runNum);
+  //=========== LCT Info =============//
+  t->Branch("LCT_slope", &LCT_slope); 
+  t->Branch("LCT_quality", &LCT_quality); 
+  t->Branch("LCT_strip", &LCT_strip);
+  t->Branch("LCT_wiregroup", &LCT_wiregroup);
+  t->Branch("LCT_bend", &LCT_bend);
+
+  t->Branch("muon_pt", &muon_pt);
+  t->Branch("muon_charge", &muon_charge);
+  t->Branch("muon_LCT_distance", &muon_LCT_distance);
 
   return t;
 }
@@ -158,12 +178,14 @@ CSCEmulatorReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
   if (debug) cout << "New! EventNumber = " << iEvent.eventAuxiliary().event() << " LumiBlock = " << iEvent.eventAuxiliary().luminosityBlock() << " RunNumber = " << iEvent.run() << endl;
   if (! iEvent.getByToken(muons_, muons)) return;
   if (debug) cout << "There are " << muons->size() << " muons in event" << endl;
-  if (muons->size() == 0) return;
+  //if (muons->size() == 0) return;
 
   //cout << "Starting the corr LCT search" << endl;
   cout << "New Event" << endl;
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
+    data_.init();
     //cout << "Looping corr lcts" << endl;
+    CSCDetId LCTDetId = (*j).first;
     cout << "New Chamber " << (*j).first << endl;
     if ((*j).first.station() != 1 or (*j).first.ring() != 1) continue;
     std::vector<CSCCorrelatedLCTDigi>::const_iterator digiItr = (*j).second.first;
@@ -171,11 +193,61 @@ CSCEmulatorReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     for (; digiItr != last; ++digiItr) {
       cout << "Found a LCT" << endl;
       cout << "Strip:        " << digiItr->getStrip() << endl;
+      cout << "Wiregroup:    " << digiItr->getKeyWG() << endl;
       cout << "Slope:        " << digiItr->getSlope() << endl;
       cout << "Bend          " << digiItr->getBend() << endl;
       cout << "Run2 Pattern: " << digiItr->getPattern() << endl;
       cout << "Run3 Pattern: " << digiItr->getRun3Pattern() << endl;
       cout << "Quality       " << digiItr->getQuality() << endl;
+
+
+      float muon_match_pt = -1.0;
+      float muon_match_charge = 999.0;
+      float muon_match_distance = 999.0;
+      for (size_t i = 0; i < muons->size(); ++i){
+        float closest_match_distance = 999;
+        edm::RefToBase<reco::Muon> muRef = muons->refAt(i);
+        const reco::Muon* mu = muRef.get();
+        if(!(mu->isGlobalMuon())) continue;
+        if(!(mu->isStandAloneMuon())) continue;
+        const reco::Track* Track = mu->outerTrack().get();
+        if (Track->validFraction() > 0.0) continue;
+        for (size_t RecHit_iter = 0; RecHit_iter != Track->recHitsSize(); RecHit_iter++){
+          const TrackingRecHit* RecHit = (Track->recHit(RecHit_iter)).get();
+          DetId RecHitId = RecHit->geographicalId();
+          uint16_t RecHitDetId = RecHitId.det();
+          if (RecHitDetId != DetId::Muon) continue;
+          uint16_t RecHitSubDet = RecHitId.subdetId();
+          if (RecHitSubDet != (uint16_t)MuonSubdetId::CSC) continue;
+          CSCDetId SegmentCSCDetId = CSCDetId(RecHitId);
+          if (not(SegmentCSCDetId.station() == 1 and SegmentCSCDetId.ring() == 1 and RecHit->dimension() == 4)) continue;
+          RecSegment* Rec_segment = (RecSegment*)RecHit;
+          const CSCSegment* ME11_segment = (CSCSegment*)Rec_segment;
+          auto SegmentCSCDetIdL4 = CSCDetId(SegmentCSCDetId.endcap(), SegmentCSCDetId.station(), SegmentCSCDetId.ring(), SegmentCSCDetId.chamber(), 4);
+          const CSCLayer* ME11_layer = CSCGeometry_->layer(SegmentCSCDetIdL4);
+          const CSCLayerGeometry* ME11_layer_geo = ME11_layer->geometry();
+          if (not(SegmentCSCDetId == LCTDetId)) continue;
+          cout << "Found a muon on the same chamber as the LCTs" << endl;
+          float LCT_strip = digiItr->getFractionalStrip();
+          float Seg_strip = ME11_layer_geo->strip(ME11_segment->localPosition());
+          if (abs(LCT_strip - Seg_strip) < closest_match_distance){
+            cout << "Found a new match! Pt " << mu->pt() << " and slope " << digiItr->getSlope() << endl;
+            muon_match_pt = mu->pt();
+            muon_match_charge = mu->charge();
+            muon_match_distance = abs(LCT_strip - Seg_strip);
+          }
+        }
+      }
+      data_.LCT_slope = digiItr->getSlope();
+      data_.LCT_quality = digiItr->getQuality();
+      data_.LCT_strip = digiItr->getStrip();
+      data_.LCT_wiregroup = digiItr->getKeyWG();
+      data_.LCT_bend = digiItr->getBend();
+
+      data_.muon_pt = muon_match_pt;
+      data_.muon_charge = muon_match_charge;
+      data_.muon_LCT_distance = muon_match_distance;
+      tree->Fill();
     }
   }
 }

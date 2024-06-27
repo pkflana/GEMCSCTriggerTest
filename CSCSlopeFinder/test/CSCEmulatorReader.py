@@ -64,7 +64,7 @@ process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader',
 	process.MuonServiceProxy,
         muons = cms.InputTag("muons"),
         emu_corrlctDigiTag = cms.InputTag("cscTriggerPrimitiveDigis"),
-        debug = cms.bool(False),
+        debug = cms.bool(True),
 )
 
 process.p = cms.Path(process.CSCEmulatorReader)
