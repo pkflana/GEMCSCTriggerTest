@@ -191,15 +191,16 @@ CSCEmulatorReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     std::vector<CSCCorrelatedLCTDigi>::const_iterator digiItr = (*j).second.first;
     std::vector<CSCCorrelatedLCTDigi>::const_iterator last = (*j).second.second;
     for (; digiItr != last; ++digiItr) {
-      cout << "Found a LCT" << endl;
-      cout << "Strip:        " << digiItr->getStrip() << endl;
-      cout << "Wiregroup:    " << digiItr->getKeyWG() << endl;
-      cout << "Slope:        " << digiItr->getSlope() << endl;
-      cout << "Bend          " << digiItr->getBend() << endl;
-      cout << "Run2 Pattern: " << digiItr->getPattern() << endl;
-      cout << "Run3 Pattern: " << digiItr->getRun3Pattern() << endl;
-      cout << "Quality       " << digiItr->getQuality() << endl;
-
+      if (debug){
+        cout << "Found a LCT" << endl;
+        cout << "Strip:        " << digiItr->getStrip() << endl;
+        cout << "Wiregroup:    " << digiItr->getKeyWG() << endl;
+        cout << "Slope:        " << digiItr->getSlope() << endl;
+        cout << "Bend          " << digiItr->getBend() << endl;
+        cout << "Run2 Pattern: " << digiItr->getPattern() << endl;
+        cout << "Run3 Pattern: " << digiItr->getRun3Pattern() << endl;
+        cout << "Quality       " << digiItr->getQuality() << endl;
+      }
 
       float muon_match_pt = -1.0;
       float muon_match_charge = 999.0;
@@ -227,11 +228,11 @@ CSCEmulatorReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           const CSCLayer* ME11_layer = CSCGeometry_->layer(SegmentCSCDetIdL4);
           const CSCLayerGeometry* ME11_layer_geo = ME11_layer->geometry();
           if (not(SegmentCSCDetId == LCTDetId)) continue;
-          cout << "Found a muon on the same chamber as the LCTs" << endl;
+          if (debug) cout << "Found a muon on the same chamber as the LCTs" << endl;
           float LCT_strip = digiItr->getFractionalStrip();
           float Seg_strip = ME11_layer_geo->strip(ME11_segment->localPosition());
           if (abs(LCT_strip - Seg_strip) < closest_match_distance){
-            cout << "Found a new match! Pt " << mu->pt() << " and slope " << digiItr->getSlope() << endl;
+            if (debug) cout << "Found a new match! Pt " << mu->pt() << " and slope " << digiItr->getSlope() << endl;
             muon_match_pt = mu->pt();
             muon_match_charge = mu->charge();
             muon_match_distance = abs(LCT_strip - Seg_strip);
