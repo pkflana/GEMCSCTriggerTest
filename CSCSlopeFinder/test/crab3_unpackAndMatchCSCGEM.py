@@ -3,8 +3,8 @@ from CRABClient.UserUtilities import config
 config = config()
 ###2018runA  314472-318876
 #section general
-config.General.requestName = '2023D_Run370293_16Oct2023_Zmu'
-config.General.workArea = '2023D_Run370293_16Oct2023_Zmu'#working dir 
+config.General.requestName = '2024E_ZMu_8July2024' #'2024E_Muon0_Zmu_28June2024'
+config.General.workArea = '2024E_ZMu_8July2024'#working dir 
 config.General.transferOutputs = True
 config.General.transferLogs = True
 
@@ -15,15 +15,15 @@ config.JobType.maxMemoryMB = 2000
 config.JobType.maxJobRuntimeMin = 1440 # 1440min = 24hours
 config.JobType.numCores = 1
 config.JobType.allowUndistributedCMSSW = True
-config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_13_0_9/src/GEMCSCTriggerTest/CSCSlopeFinder/luts']
+config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_14_0_7/src/GEMCSCTriggerTest/CSCSlopeFinder/luts']
 #config.JobType.generator
 #config.JobType.pyCfgParams
 #config.JobType.inputFiles
 
 
-config.Data.inputDataset = '/Muon1/Run2023D-ZMu-PromptReco-v1/RAW-RECO'
-#config.Data.inputDataset = '/ZeroBias/Run2023D-LogError-PromptReco-v1/RAW-RECO'
-config.Data.runRange = '370293'
+#config.Data.inputDataset = '/ZeroBias/Run2024E-LogError-PromptReco-v2/RAW-RECO'
+config.Data.inputDataset = '/Muon0/Run2024E-ZMu-PromptReco-v2/RAW-RECO'
+#config.Data.runRange = '381365'
 
 #config.Data.inputDBS = 'phys03'
 config.Data.inputDBS = 'global'
@@ -31,7 +31,7 @@ config.Data.splitting = 'FileBased'
 #config.Data.splitting = 'LumiBased'
 #config.Data.splitting = 'Automatic'
 config.Data.unitsPerJob = 10
-config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2023D_Run370293_Zmu/'
+config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024E_ZMu/'
 config.Data.publication = False
 config.Data.outputDatasetTag = config.General.requestName
 #config.Site.storageSite = 'T3_US_FNALLPC'

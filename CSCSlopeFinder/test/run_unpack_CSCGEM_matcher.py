@@ -50,7 +50,7 @@ options.register("runME11ILT", True, VarParsing.multiplicity.singleton, VarParsi
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME1/1.")
 options.register("runME21ILT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running the GEM-CSC integrated local trigger algorithm in ME2/1.")
-options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("saveEdmOutput", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.register("preTriggerAnalysis", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to print out more details about CLCTs and LCTs in the offline CSC DQM module.")
@@ -238,7 +238,7 @@ process.output = cms.OutputModule(
 process.output = cms.OutputModule(
     "PoolOutputModule",
       outputCommands = cms.untracked.vstring(
-            ['drop *',
+            ['keep *',
              'keep *_cscTriggerPrimitiveDigis__L1CSCTPG',
              'keep *_muonCSCDigis_MuonCSCCorrelatedLCTDigi_L1CSCTPG',
              'keep *_muonCSCDigis_MuonGEMPadDigiCluster_L1CSCTPG',
@@ -389,5 +389,20 @@ process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader',
 process.p8 = cms.EndPath(process.CSCEmulatorReader)
 
 process.schedule.extend([process.p8])
+
+
+process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester', 
+	process.MuonServiceProxy,
+        l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
+        corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
+        gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
+        luts_folder = cms.string("../luts"),
+        alignment = cms.bool(True),
+        debug = cms.bool(True),
+)
+
+process.p9 = cms.EndPath(process.GEMCSCBendingAngleTester)
+
+process.schedule.extend([process.p9])
 
 #print(process.dumpPython())
