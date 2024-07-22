@@ -47,6 +47,7 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/BXVector.h"
+#include "DataFormats/L1TMuon/interface/RegionalMuonCand.h"
 
 
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
@@ -242,6 +243,8 @@ private:
   edm::Handle<GEMPadDigiClusterCollection> gemPadDigis;
   edm::EDGetTokenT<MuonBxCollection> l1_muon_token;
   edm::Handle<MuonBxCollection> l1_muons;
+  edm::EDGetTokenT<RegionalMuonCandBxCollection> emtf_muon_token;
+  edm::Handle<RegionalMuonCandBxCollection> emtf_muons;
 
 
   edm::Service<TFileService> fs;
@@ -366,6 +369,8 @@ GEMCSCBendingAngleTester::GEMCSCBendingAngleTester(const edm::ParameterSet& iCon
   co_token = consumes<CSCCorrelatedLCTDigiCollection>(iConfig.getParameter<edm::InputTag>("corrlctDigiTag"));
   gemdigi_token = consumes<GEMPadDigiClusterCollection>(iConfig.getParameter<edm::InputTag>("gemPadDigiCluster"));
   l1_muon_token = consumes<MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1_muon_token"));
+  emtf_muon_token = consumes<RegionalMuonCandBxCollection>(iConfig.getParameter<edm::InputTag>("emtf_muon_token"));
+
 
   luts_folder = iConfig.getParameter<string>("luts_folder");
 
@@ -445,11 +450,16 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(co_token, correlatedlcts);
   iEvent.getByToken(gemdigi_token, gemPadDigis);
   iEvent.getByToken(l1_muon_token, l1_muons);
+  iEvent.getByToken(emtf_muon_token, emtf_muons);
 
 
   if (debug) cout << "New! EventNumber = " << iEvent.eventAuxiliary().event() << " LumiBlock = " << iEvent.eventAuxiliary().luminosityBlock() << " RunNumber = " << iEvent.run() << endl;
 
   if (debug) cout << "New Event" << endl;
+
+  std::cout << "There are " << l1_muons->size() << " L1 Muons" << std::endl;
+  std::cout << "There are " << emtf_muons->size() << " EMTF Muons" << std::endl;
+  
 
 
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
@@ -723,6 +733,17 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.LCT_phi_approx = CSCCorrLCT_GP.phi();
               }
             }
+          }
+        }
+      }
+      std::cout << "Lets loop over all EMTF Muons now" << std::endl;
+      if ((emtf_muons.isValid())){
+        cout << emtf_muons->size() << std::endl;
+        for (int ibx = emtf_muons->getFirstBX(); ibx <= emtf_muons->getLastBX(); ++ibx){
+          for (auto it = emtf_muons->begin(ibx); it != emtf_muons->end(ibx); it++){
+            std::cout << "Looping emtfs!" << std::endl;
+            std::cout << it->muIdx() << std::endl;
+            //it->trackSubAddress();
           }
         }
       }

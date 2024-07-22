@@ -394,6 +394,7 @@ process.schedule.extend([process.p8])
 process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester', 
 	process.MuonServiceProxy,
         l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
+        emtf_muon_token = cms.InputTag("gmtStage2Digis", "EMTF"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
         luts_folder = cms.string("../luts"),
