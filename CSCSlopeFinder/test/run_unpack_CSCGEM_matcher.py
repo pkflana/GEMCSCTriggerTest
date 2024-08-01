@@ -24,7 +24,7 @@ options.register("dqm", False, VarParsing.multiplicity.singleton, VarParsing.var
                  "Set to True when you want to run the CSC DQM")
 options.register("dqmGEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to run the GEM DQM")
-options.register("useEmtfGEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("useEmtfGEM", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to use GEM clusters from the EMTF in the DQM")
 options.register("useB904ME11", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when using B904 ME1/1 data.")
@@ -395,6 +395,7 @@ process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester',
 	process.MuonServiceProxy,
         l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
         emtf_muon_token = cms.InputTag("gmtStage2Digis", "EMTF"),
+        emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
         luts_folder = cms.string("../luts"),

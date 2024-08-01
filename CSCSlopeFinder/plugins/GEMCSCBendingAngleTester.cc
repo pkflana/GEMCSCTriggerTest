@@ -48,7 +48,7 @@
 #include "DataFormats/L1Trigger/interface/Muon.h"
 #include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "DataFormats/L1TMuon/interface/RegionalMuonCand.h"
-
+#include "DataFormats/L1TMuon/interface/EMTFTrack.h"
 
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
@@ -121,6 +121,20 @@ struct LCTL1MuonMatcher
   float LCT_eta_approx;
   float LCT_phi_approx;
 
+  //============ EMTFTrack Match =============//
+  bool has_emtf_track_match;
+  float emtftrack_pt;
+  float emtftrack_eta;
+  float emtftrack_phi;
+  float emtftrack_charge;
+  float emtftrack_endcap;
+  float emtftrack_deltaStrip;
+
+  bool has_emtftrack_l1muon_match;
+  float l1muon_match_pt;
+  float l1muon_match_eta;
+  float l1muon_match_phi;
+  float l1muon_match_charge;
 };
 
 void LCTL1MuonMatcher::init()
@@ -171,6 +185,22 @@ void LCTL1MuonMatcher::init()
   l1muon_charge = value;
   LCT_eta_approx = value;
   LCT_phi_approx = value;
+
+
+  //============ EMTFTrack Match =============//
+  has_emtf_track_match = 0;
+  emtftrack_pt = value;
+  emtftrack_eta = value;
+  emtftrack_phi = value;
+  emtftrack_charge = value;
+  emtftrack_endcap = value;
+  emtftrack_deltaStrip = value;
+
+  has_emtftrack_l1muon_match = 0;
+  l1muon_match_pt = value;
+  l1muon_match_eta = value;
+  l1muon_match_phi = value;
+  l1muon_match_charge = value;
 }
 
 TTree* LCTL1MuonMatcher::book(TTree *t){
@@ -222,6 +252,22 @@ TTree* LCTL1MuonMatcher::book(TTree *t){
   t->Branch("l1muon_charge", &l1muon_charge);
   t->Branch("LCT_eta_approx", &LCT_eta_approx);
   t->Branch("LCT_phi_approx", &LCT_phi_approx);
+
+  //============ L1Muon Match =============//
+    t->Branch("has_emtf_track_match", &has_emtf_track_match);
+    t->Branch("emtftrack_pt", &emtftrack_pt);
+    t->Branch("emtftrack_eta", &emtftrack_eta);
+    t->Branch("emtftrack_phi", &emtftrack_phi);
+    t->Branch("emtftrack_charge", &emtftrack_charge);
+    t->Branch("emtftrack_endcap", &emtftrack_endcap);
+    t->Branch("emtftrack_deltaStrip", &emtftrack_deltaStrip);
+
+    t->Branch("has_emtftrack_l1muon_match", &has_emtftrack_l1muon_match);
+    t->Branch("l1muon_match_pt", &l1muon_match_pt);
+    t->Branch("l1muon_match_eta", &l1muon_match_eta);
+    t->Branch("l1muon_match_phi", &l1muon_match_phi);
+    t->Branch("l1muon_match_charge", &l1muon_match_charge);
+
   return t;
 }
 
@@ -245,6 +291,8 @@ private:
   edm::Handle<MuonBxCollection> l1_muons;
   edm::EDGetTokenT<RegionalMuonCandBxCollection> emtf_muon_token;
   edm::Handle<RegionalMuonCandBxCollection> emtf_muons;
+  edm::EDGetTokenT<EMTFTrackCollection> emtf_track_token;
+  edm::Handle<EMTFTrackCollection> emtf_tracks;
 
 
   edm::Service<TFileService> fs;
@@ -370,7 +418,7 @@ GEMCSCBendingAngleTester::GEMCSCBendingAngleTester(const edm::ParameterSet& iCon
   gemdigi_token = consumes<GEMPadDigiClusterCollection>(iConfig.getParameter<edm::InputTag>("gemPadDigiCluster"));
   l1_muon_token = consumes<MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1_muon_token"));
   emtf_muon_token = consumes<RegionalMuonCandBxCollection>(iConfig.getParameter<edm::InputTag>("emtf_muon_token"));
-
+  emtf_track_token = consumes<EMTFTrackCollection>(iConfig.getParameter<edm::InputTag>("emtf_track_token"));
 
   luts_folder = iConfig.getParameter<string>("luts_folder");
 
@@ -451,6 +499,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(gemdigi_token, gemPadDigis);
   iEvent.getByToken(l1_muon_token, l1_muons);
   iEvent.getByToken(emtf_muon_token, emtf_muons);
+  iEvent.getByToken(emtf_track_token, emtf_tracks);
 
 
   if (debug) cout << "New! EventNumber = " << iEvent.eventAuxiliary().event() << " LumiBlock = " << iEvent.eventAuxiliary().luminosityBlock() << " RunNumber = " << iEvent.run() << endl;
@@ -459,7 +508,8 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
 
   std::cout << "There are " << l1_muons->size() << " L1 Muons" << std::endl;
   std::cout << "There are " << emtf_muons->size() << " EMTF Muons" << std::endl;
-  
+  std::cout << "There are " << emtf_tracks->size() << " EMTF Tracks" << std::endl;
+
 
 
   for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j = correlatedlcts->begin(); j != correlatedlcts->end(); j++){
@@ -488,6 +538,12 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
       data_.LCT_CSC_ME1b = (data_.LCT_eighthstrip < 512) ? 1 : 0;
       data_.LCT_trknum = CSCCorrLCT->getTrknmb();
       data_.CLCT_quality = (CSCCorrLCT->getCLCT()).getQuality();
+
+      std::cout << "Lets dump the ME1/1 LCT" << std::endl;
+      std::cout << "Quality " << CSCCorrLCT->getQuality() << std::endl;
+      std::cout << "Pattern " << CSCCorrLCT->getPattern() << std::endl;
+      std::cout << "Bend " << CSCCorrLCT->getBend() << std::endl;
+      std::cout << "Slope " << CSCCorrLCT->getSlope() << std::endl;
 
       //Find LCT Propagation
       map<int, int> CSCLCTPropL1Map;
@@ -744,8 +800,110 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
             std::cout << "Looping emtfs!" << std::endl;
             std::cout << it->muIdx() << std::endl;
             //it->trackSubAddress();
+            //l1t::RegionalMuonCand::emtfAddress tmp_address = kME1Seg
+            std::cout << "Track seg is " << it->trackSubAddress(l1t::RegionalMuonCand::kME1Seg) << std::endl;
+            std::cout << "Track ch is " << it->trackSubAddress(l1t::RegionalMuonCand::kME1Ch) << std::endl;
+            std::cout << "Track number is " << it->trackSubAddress(l1t::RegionalMuonCand::kTrkNum) << std::endl;
+            std::cout << "Track emtf pos " << (it->trackFinderType() == l1t::emtf_pos) << std::endl;
+            std::cout << "Track emtf neg " << (it->trackFinderType() == l1t::emtf_neg) << std::endl;
           }
         }
+      }
+      cout << "Event found " << ge11_muons << " GE11 muons" << endl;
+
+      float best_delta_strip = 999;
+
+      std::cout << "Lets loop over all EMTF Tracks now" << std::endl;
+      if ((emtf_tracks.isValid())){
+        cout << emtf_tracks->size() << std::endl;
+        for (unsigned int track_id = 0; track_id < emtf_tracks->size(); ++track_id) {
+          const auto& track = emtf_tracks->at(track_id);
+          if (debug){
+            std::cout << "Looping emtfs tracks!" << std::endl;
+            std::cout << "Track Endcap " << track.Endcap() << std::endl;
+            std::cout << "Track Sector " << track.Sector() << std::endl;
+            std::cout << "Track Sector_idx " << track.Sector_idx() << std::endl;
+            std::cout << "Track Mode " << track.Mode() << std::endl;
+            std::cout << "Track Mode_CSC " << track.Mode_CSC() << std::endl;
+            std::cout << "Track Rank " << track.Rank() << std::endl;
+            std::cout << "Track Winner " << track.Winner() << std::endl;
+            std::cout << "Track Charge " << track.Charge() << std::endl;
+            std::cout << "Track BX " << track.BX() << std::endl;
+            std::cout << "Track First_BX " << track.First_BX() << std::endl;
+            std::cout << "Track Second_BX " << track.Second_BX() << std::endl;
+            std::cout << "Track Pt " << track.Pt() << std::endl;
+            std::cout << "Track Eta " << track.Eta() << std::endl;
+            std::cout << "Track Phi_glob " << track.Phi_glob() << std::endl;
+            std::cout << "Track Track_num " << track.Track_num() << std::endl;
+          }
+          std::cout << "Mode is " << std::bitset<4>(track.Mode_CSC()) << std::endl;
+          std::cout << "First bit? " << ((track.Mode_CSC() & 8) == 8) << std::endl;
+          std::cout << "But a track is made of hits, loop over hits" << std::endl;
+          EMTFHitCollection emtf_hits = track.Hits();
+
+          if ((track.Mode_CSC() & 8) == 8){
+            bool has_me11 = false;
+            for (unsigned int hit_id = 0; hit_id < emtf_hits.size(); ++hit_id) {
+              const auto& hit = emtf_hits.at(hit_id);
+              if (hit.Is_CSC() != 1) continue;
+              std::cout << "Station/Ring = " << hit.Station() << "/" << hit.Ring() << std::endl;
+              if ((hit.Station() != 1) || (hit.Ring() != 1)) continue;
+              has_me11 = true;
+              std::cout << "This track had station 1 " << std::bitset<4>(track.Mode_CSC()) << std::endl;
+              if (debug){
+                std::cout << "CSC Hit : Matching LCT Target" << std::endl;
+                std::cout << "Subsystem " << hit.Subsystem() << std::endl;
+                std::cout << "Endcap " << hit.Endcap() << std::endl;
+                std::cout << "Station " << hit.Station() << std::endl;
+                std::cout << "Ring " << hit.Ring() << std::endl;
+                std::cout << "Quality " << hit.Quality() << ":" << CSCCorrLCT->getQuality() << std::endl;
+                std::cout << "Pattern " << hit.Pattern() << ":" << CSCCorrLCT->getPattern() << std::endl;
+                std::cout << "Bend " << hit.Bend() << ":" << CSCCorrLCT->getBend() << std::endl;
+                std::cout << "Slope " << hit.Slope() << ":" << CSCCorrLCT->getSlope() << std::endl;
+                std::cout << "Strip " << hit.Strip() << ":" << CSCCorrLCT->getStrip() << std::endl;
+                std::cout << "Chamber " << hit.Chamber() << ":" << LCTDetId.chamber() << std::endl;
+              }
+              if ((hit.Chamber() == LCTDetId.chamber()) && (hit.Endcap() == LCTDetId.endcap())){
+                ///if (hit.Strip() == CSCCorrLCT->getStrip()){
+                if (abs(hit.Strip() - CSCCorrLCT->getStrip()) < best_delta_strip){
+                  data_.has_emtf_track_match = 1;
+                  data_.emtftrack_pt = track.Pt();
+                  data_.emtftrack_eta = track.Eta();
+                  data_.emtftrack_phi = track.Phi_glob();
+                  data_.emtftrack_charge = track.Charge();
+                  data_.emtftrack_endcap = track.Endcap();
+                  data_.emtftrack_deltaStrip = hit.Strip() - CSCCorrLCT->getStrip();
+
+                  if ((l1_muons.isValid())){
+                    for (int ibx = l1_muons->getFirstBX(); ibx <= l1_muons->getLastBX(); ++ibx){
+                      for (auto it = l1_muons->begin(ibx); it != l1_muons->end(ibx); it++){
+                        if (it->et() > 0){
+                          if ((it->pt() == track.Pt()) && (it->eta() == track.Eta()) && (abs(it->phi() - track.Phi_glob()*3.14159265/180) < 0.1)){
+                            data_.has_emtftrack_l1muon_match = 1;
+                            data_.l1muon_match_pt = it->pt();
+                            data_.l1muon_match_eta = it->eta();
+                            data_.l1muon_match_phi = it->phi();
+                            data_.l1muon_match_charge = it->charge();
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (data_.has_emtftrack_l1muon_match == 0){
+                    if (debug) std::cout << "This emtf track could not find an L1 Match!!!" << std::endl;
+                  }
+                }
+              }
+            }
+            if (has_me11 == false){
+              if (debug) std::cout << "A track with mode inc ME11 doesn't have a 11 hit?????" << std::endl;
+            }
+          }
+        }
+      }
+      if (data_.has_emtf_track_match == 0){
+        std::cout << "This LCT could not find a matching EMTFHit! Closest was" << std::endl;
+
       }
       cout << "Event found " << ge11_muons << " GE11 muons" << endl;
       tree->Fill();
