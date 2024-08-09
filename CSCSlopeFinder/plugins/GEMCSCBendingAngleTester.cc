@@ -539,11 +539,13 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
       data_.LCT_trknum = CSCCorrLCT->getTrknmb();
       data_.CLCT_quality = (CSCCorrLCT->getCLCT()).getQuality();
 
-      std::cout << "Lets dump the ME1/1 LCT" << std::endl;
-      std::cout << "Quality " << CSCCorrLCT->getQuality() << std::endl;
-      std::cout << "Pattern " << CSCCorrLCT->getPattern() << std::endl;
-      std::cout << "Bend " << CSCCorrLCT->getBend() << std::endl;
-      std::cout << "Slope " << CSCCorrLCT->getSlope() << std::endl;
+      if (debug){
+        std::cout << "Dump the ME1/1 LCT" << std::endl;
+        std::cout << "Quality " << CSCCorrLCT->getQuality() << std::endl;
+        std::cout << "Pattern " << CSCCorrLCT->getPattern() << std::endl;
+        std::cout << "Bend " << CSCCorrLCT->getBend() << std::endl;
+        std::cout << "Slope " << CSCCorrLCT->getSlope() << std::endl;
+      }
 
       //Find LCT Propagation
       map<int, int> CSCLCTPropL1Map;
@@ -671,8 +673,10 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.LCT_match_GE1_WGMin = WG_Min;
                 data_.LCT_match_GE1_WGMax = WG_Max;
 
-                data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
-
+                int new_slope = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
+                data_.LCT_slope_with_GE1 = new_slope; //Maybe it was a data corruption issue?
+                std::cout << "Doing the lct slope adjust, was " << data_.LCT_slope << " but now " << data_.LCT_slope_with_GE1 << std::endl;
+                std::cout << "GEM PAD " << pad << " GEM ES " << DigiToESMap[pad] << " LCT ES " << data_.LCT_eighthstrip << " LCT PROP ES " << LCTToGEML1EighthStrip << " LCT SLOPE " << data_.LCT_slope << std::endl;
               }   
             }
           }
@@ -759,27 +763,19 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           data_.LCT_all_GE2_WGMax = tmp_all_L2_WGMax;
         }
       }
-      std::cout << "We have an LCT on chamber " << LCTDetId << std::endl;
-      std::cout << "We have the LCT at strip/wiregroup " << CSCCorrLCT->getStrip() << "/" << CSCCorrLCT->getKeyWG() << std::endl;
       auto CSCDetIdL4 = CSCDetId(LCTDetId.endcap(), LCTDetId.station(), LCTDetId.ring(), LCTDetId.chamber(), 4);
       const CSCLayer* ME11_layer = CSCGeometry_->layer(CSCDetIdL4);
       const CSCLayerGeometry* ME11_layer_geo = ME11_layer->geometry();
       LocalPoint CSCCorrLCT_LP = ME11_layer_geo->stripWireGroupIntersection(CSCCorrLCT->getStrip(), CSCCorrLCT->getKeyWG());
-      std::cout << "That translates to a local point of " << CSCCorrLCT_LP << std::endl;
       GlobalPoint CSCCorrLCT_GP = ME11_layer->toGlobal(CSCCorrLCT_LP);
-      std::cout << "Which is global point " << CSCCorrLCT_GP << std::endl;
-      std::cout << "So we are finally looking for a phi/eta around " << CSCCorrLCT_GP.phi() << "/" << CSCCorrLCT_GP.eta() << std::endl;
-      std::cout << "Loop over all L1 Muons now" << std::endl;
       int ge11_muons = 0;
       if ((l1_muons.isValid())){
         cout << l1_muons->size() << endl;
         for (int ibx = l1_muons->getFirstBX(); ibx <= l1_muons->getLastBX(); ++ibx){
           for (auto it = l1_muons->begin(ibx); it != l1_muons->end(ibx); it++){
             if (it->et() > 0){
-              cout << "Muon at bx " << ibx << " et: " << it->et() << " eta: " << it->eta() << " phi:  " << it->phi() << " pt:  " << it->pt() << endl;
               if (abs((it->eta()) > 1.5) && (abs(it->eta()) < 2.2)){ge11_muons++;}
               if ((abs(it->eta() - CSCCorrLCT_GP.eta()) < 0.1) && ((abs(it->phi() - CSCCorrLCT_GP.phi())) < 0.1)){
-                cout << "FOUND A GOOD MATCH!" << std::endl;
                 data_.l1muon_pt = it->pt();
                 data_.l1muon_eta = it->eta();
                 data_.l1muon_phi = it->phi();
@@ -792,28 +788,8 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           }
         }
       }
-      std::cout << "Lets loop over all EMTF Muons now" << std::endl;
-      if ((emtf_muons.isValid())){
-        cout << emtf_muons->size() << std::endl;
-        for (int ibx = emtf_muons->getFirstBX(); ibx <= emtf_muons->getLastBX(); ++ibx){
-          for (auto it = emtf_muons->begin(ibx); it != emtf_muons->end(ibx); it++){
-            std::cout << "Looping emtfs!" << std::endl;
-            std::cout << it->muIdx() << std::endl;
-            //it->trackSubAddress();
-            //l1t::RegionalMuonCand::emtfAddress tmp_address = kME1Seg
-            std::cout << "Track seg is " << it->trackSubAddress(l1t::RegionalMuonCand::kME1Seg) << std::endl;
-            std::cout << "Track ch is " << it->trackSubAddress(l1t::RegionalMuonCand::kME1Ch) << std::endl;
-            std::cout << "Track number is " << it->trackSubAddress(l1t::RegionalMuonCand::kTrkNum) << std::endl;
-            std::cout << "Track emtf pos " << (it->trackFinderType() == l1t::emtf_pos) << std::endl;
-            std::cout << "Track emtf neg " << (it->trackFinderType() == l1t::emtf_neg) << std::endl;
-          }
-        }
-      }
-      cout << "Event found " << ge11_muons << " GE11 muons" << endl;
-
       float best_delta_strip = 999;
-
-      std::cout << "Lets loop over all EMTF Tracks now" << std::endl;
+      if (debug) std::cout << "Loop over all EMTF Tracks" << std::endl;
       if ((emtf_tracks.isValid())){
         cout << emtf_tracks->size() << std::endl;
         for (unsigned int track_id = 0; track_id < emtf_tracks->size(); ++track_id) {
@@ -836,9 +812,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
             std::cout << "Track Phi_glob " << track.Phi_glob() << std::endl;
             std::cout << "Track Track_num " << track.Track_num() << std::endl;
           }
-          std::cout << "Mode is " << std::bitset<4>(track.Mode_CSC()) << std::endl;
-          std::cout << "First bit? " << ((track.Mode_CSC() & 8) == 8) << std::endl;
-          std::cout << "But a track is made of hits, loop over hits" << std::endl;
+          if (debug) std::cout << "Loop over track.hits" << std::endl;
           EMTFHitCollection emtf_hits = track.Hits();
 
           if ((track.Mode_CSC() & 8) == 8){
@@ -846,7 +820,6 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
             for (unsigned int hit_id = 0; hit_id < emtf_hits.size(); ++hit_id) {
               const auto& hit = emtf_hits.at(hit_id);
               if (hit.Is_CSC() != 1) continue;
-              std::cout << "Station/Ring = " << hit.Station() << "/" << hit.Ring() << std::endl;
               if ((hit.Station() != 1) || (hit.Ring() != 1)) continue;
               has_me11 = true;
               std::cout << "This track had station 1 " << std::bitset<4>(track.Mode_CSC()) << std::endl;
@@ -905,7 +878,6 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
         std::cout << "This LCT could not find a matching EMTFHit! Closest was" << std::endl;
 
       }
-      cout << "Event found " << ge11_muons << " GE11 muons" << endl;
       tree->Fill();
     }
   }
