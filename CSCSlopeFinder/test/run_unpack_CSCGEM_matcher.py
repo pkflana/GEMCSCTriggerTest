@@ -398,7 +398,8 @@ process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester',
         emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
-        luts_folder = cms.string("../luts"),
+        #luts_folder = cms.string("../luts"), #For local running
+        luts_folder = cms.string("luts"), #For crab running
         alignment = cms.bool(True),
         debug = cms.bool(True),
 )

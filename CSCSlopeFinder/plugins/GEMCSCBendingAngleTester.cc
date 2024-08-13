@@ -673,10 +673,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.LCT_match_GE1_WGMin = WG_Min;
                 data_.LCT_match_GE1_WGMax = WG_Max;
 
-                int new_slope = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
-                data_.LCT_slope_with_GE1 = new_slope; //Maybe it was a data corruption issue?
-                std::cout << "Doing the lct slope adjust, was " << data_.LCT_slope << " but now " << data_.LCT_slope_with_GE1 << std::endl;
-                std::cout << "GEM PAD " << pad << " GEM ES " << DigiToESMap[pad] << " LCT ES " << data_.LCT_eighthstrip << " LCT PROP ES " << LCTToGEML1EighthStrip << " LCT SLOPE " << data_.LCT_slope << std::endl;
+                data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
               }   
             }
           }
