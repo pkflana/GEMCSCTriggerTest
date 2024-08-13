@@ -103,6 +103,7 @@ struct LCTL1MuonMatcher
   int LCT_match_GE1_pad; int LCT_match_GE2_pad;
   int LCT_match_GE1_BX; int LCT_match_GE2_BX;
   int LCT_match_GE1_padES; int LCT_match_GE2_padES;
+  int LCT_match_GE1_padES_aligned; int LCT_match_GE2_padES_aligned;
   int LCT_match_GE1_WGMin; int LCT_match_GE2_WGMin;
   int LCT_match_GE1_WGMax; int LCT_match_GE2_WGMax;
   vector<int> LCT_all_GE1_pads_ES; vector<int> LCT_all_GE2_pads_ES;
@@ -169,6 +170,7 @@ void LCTL1MuonMatcher::init()
   LCT_match_GE1_pad = value; LCT_match_GE2_pad = value;
   LCT_match_GE1_BX = value; LCT_match_GE2_BX = value;
   LCT_match_GE1_padES = value; LCT_match_GE2_padES = value;
+  LCT_match_GE1_padES_aligned = value; LCT_match_GE2_padES_aligned = value;
   LCT_match_GE1_WGMin = value; LCT_match_GE2_WGMin = value;
   LCT_match_GE1_WGMax = value; LCT_match_GE2_WGMax = value;
   LCT_all_GE1_pads_ES.clear(); LCT_all_GE2_pads_ES.clear();
@@ -236,6 +238,7 @@ TTree* LCTL1MuonMatcher::book(TTree *t){
   t->Branch("LCT_match_GE1_pad", &LCT_match_GE1_pad); t->Branch("LCT_match_GE2_pad", &LCT_match_GE2_pad);
   t->Branch("LCT_match_GE1_BX", &LCT_match_GE1_BX); t->Branch("LCT_match_GE2_BX", &LCT_match_GE2_BX);
   t->Branch("LCT_match_GE1_padES", &LCT_match_GE1_padES); t->Branch("LCT_match_GE2_padES", &LCT_match_GE2_padES);
+  t->Branch("LCT_match_GE1_padES_aligned", &LCT_match_GE1_padES_aligned); t->Branch("LCT_match_GE2_padES_aligned", &LCT_match_GE2_padES_aligned);
   t->Branch("LCT_all_GE1_pads_ES_align_corr", &LCT_all_GE1_pads_ES_align_corr); t->Branch("LCT_all_GE2_pads_ES_align_corr", &LCT_all_GE2_pads_ES_align_corr);
   t->Branch("LCT_match_GE1_WGMin", &LCT_match_GE1_WGMin); t->Branch("LCT_match_GE2_WGMin", &LCT_match_GE2_WGMin);
   t->Branch("LCT_match_GE1_WGMax", &LCT_match_GE1_WGMax); t->Branch("LCT_match_GE2_WGMax", &LCT_match_GE2_WGMax);
@@ -670,6 +673,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.LCT_match_GE1_pad = pad;
                 data_.LCT_match_GE1_BX = adjustedBX;
                 data_.LCT_match_GE1_padES = DigiToESMap[pad];
+                data_.LCT_match_GE1_padES_aligned = DigiToESMap[pad] + align_corr_tmp;
                 data_.LCT_match_GE1_WGMin = WG_Min;
                 data_.LCT_match_GE1_WGMax = WG_Max;
 
@@ -745,6 +749,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.LCT_match_GE2_pad = pad;
                 data_.LCT_match_GE2_BX = adjustedBX;
                 data_.LCT_match_GE2_padES = DigiToESMap[pad];
+                data_.LCT_match_GE2_padES_aligned = DigiToESMap[pad] + align_corr_tmp;
                 data_.LCT_match_GE2_WGMin = WG_Min;
                 data_.LCT_match_GE2_WGMax = WG_Max;
 
@@ -833,7 +838,9 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 std::cout << "Strip " << hit.Strip() << ":" << CSCCorrLCT->getStrip() << std::endl;
                 std::cout << "Chamber " << hit.Chamber() << ":" << LCTDetId.chamber() << std::endl;
               }
-              if ((hit.Chamber() == LCTDetId.chamber()) && (hit.Endcap() == LCTDetId.endcap())){
+              std::cout << "hit endcap " << hit.Endcap() << std::endl;
+              std::cout << "LCT endcap " << LCTDetId.endcap() << std::endl;
+              if ((hit.Chamber() == LCTDetId.chamber()) && (hit.Endcap() == LCTDetId.zendcap())){
                 ///if (hit.Strip() == CSCCorrLCT->getStrip()){
                 if (abs(hit.Strip() - CSCCorrLCT->getStrip()) < best_delta_strip){
                   data_.has_emtf_track_match = 1;
