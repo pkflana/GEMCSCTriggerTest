@@ -101,7 +101,8 @@ process.source = cms.Source(
       fileNames = cms.untracked.vstring(options.inputFiles),
       inputCommands = cms.untracked.vstring(
             'keep *',
-            'drop CSCDetIdCSCShowerDigiMuonDigiCollection_simCscTriggerPrimitiveDigis_*_*'
+            'drop CSCDetIdCSCShowerDigiMuonDigiCollection_simCscTriggerPrimitiveDigis_*_*',
+            'drop floatBXVector_gtStage2Digis_CICADAScore_RECO' #This was causing a fail for some reason in 2024F/G? 
       )
 )
 
@@ -398,10 +399,12 @@ process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester',
         emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
+        muon_token = cms.InputTag("muons"),
+        vertexCollection_token = cms.InputTag("offlinePrimaryVertices"),
         #luts_folder = cms.string("../luts"), #For local running
         luts_folder = cms.string("luts"), #For crab running
         alignment = cms.bool(True),
-        debug = cms.bool(True),
+        debug = cms.bool(False),
 )
 
 process.p9 = cms.EndPath(process.GEMCSCBendingAngleTester)
