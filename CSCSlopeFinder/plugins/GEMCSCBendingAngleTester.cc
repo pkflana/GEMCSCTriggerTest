@@ -33,6 +33,7 @@
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/DetId/interface/DetId.h"
@@ -72,7 +73,7 @@ using namespace l1t;
 struct LCTL1MuonMatcher
 {
   void init();
-  TTree* book(TTree *t);
+  TTree* book(TTree *t, const char *name);
   //============ Event Info ===============//
   unsigned long long evtNum; unsigned long long lumiBlock; int runNum;
 
@@ -106,6 +107,8 @@ struct LCTL1MuonMatcher
   int LCT_match_GE1_padES_aligned; int LCT_match_GE2_padES_aligned;
   int LCT_match_GE1_WGMin; int LCT_match_GE2_WGMin;
   int LCT_match_GE1_WGMax; int LCT_match_GE2_WGMax;
+  int LCT_match_GE1_roll; int LCT_match_GE2_roll;
+
   vector<int> LCT_all_GE1_pads_ES; vector<int> LCT_all_GE2_pads_ES;
   vector<int> LCT_all_GE1_pads_ES_aligned; vector<int> LCT_all_GE2_pads_ES_aligned;
   vector<int> LCT_all_GE1_bxs; vector<int> LCT_all_GE2_bxs;
@@ -113,6 +116,7 @@ struct LCTL1MuonMatcher
   vector<int> LCT_all_GE1_WGMax; vector<int> LCT_all_GE2_WGMax;
   int LCT_slope_with_GE1; int LCT_slope_with_GE2;
   int LCT_BendingAngle_GE1; int LCT_BendingAngle_GE2;
+  int BendingAngleRealistic;
 
   //============ L1Muon Match =============//
   float l1muon_pt;
@@ -145,6 +149,7 @@ struct LCTL1MuonMatcher
 
   bool z_cand;
   float z_mass;
+  bool z_opposite_charge;
   int lct_to_zmu_idx;
 };
 
@@ -183,6 +188,7 @@ void LCTL1MuonMatcher::init()
   LCT_match_GE1_padES_aligned = value; LCT_match_GE2_padES_aligned = value;
   LCT_match_GE1_WGMin = value; LCT_match_GE2_WGMin = value;
   LCT_match_GE1_WGMax = value; LCT_match_GE2_WGMax = value;
+  LCT_match_GE1_roll = value; LCT_match_GE2_roll = value;
   LCT_all_GE1_pads_ES.clear(); LCT_all_GE2_pads_ES.clear();
   LCT_all_GE1_pads_ES_aligned.clear(); LCT_all_GE2_pads_ES_aligned.clear();
   LCT_all_GE1_bxs.clear(); LCT_all_GE2_bxs.clear();
@@ -190,6 +196,7 @@ void LCTL1MuonMatcher::init()
   LCT_all_GE1_WGMax.clear(); LCT_all_GE2_WGMax.clear();
   LCT_slope_with_GE1 = value; LCT_slope_with_GE2 = value;
   LCT_BendingAngle_GE1 = value; LCT_BendingAngle_GE2 = value;
+  BendingAngleRealistic = value;
 
   //============ L1Muon Match =============//
   l1muon_pt = value;
@@ -223,12 +230,14 @@ void LCTL1MuonMatcher::init()
 
   z_cand = false;
   z_mass = value;
+  z_opposite_charge = false;
   lct_to_zmu_idx = value;
 }
 
-TTree* LCTL1MuonMatcher::book(TTree *t){
+TTree* LCTL1MuonMatcher::book(TTree *t, const char *name){
   edm::Service< TFileService > fs;
-  t = fs->make<TTree>("LCTL1MuonMatcher", "LCTL1MuonMatcher");
+  //t = fs->make<TTree>("LCTL1MuonMatcher", "LCTL1MuonMatcher");
+  t = fs->make<TTree>(Form(name), Form(name));
 
   //=========== Event Info ============//
   t->Branch("evtNum", &evtNum); t->Branch("lumiBlock", &lumiBlock); t->Branch("runNum", &runNum);
@@ -263,12 +272,14 @@ TTree* LCTL1MuonMatcher::book(TTree *t){
   t->Branch("LCT_all_GE1_pads_ES_align_corr", &LCT_all_GE1_pads_ES_aligned); t->Branch("LCT_all_GE2_pads_ES_align_corr", &LCT_all_GE2_pads_ES_aligned);
   t->Branch("LCT_match_GE1_WGMin", &LCT_match_GE1_WGMin); t->Branch("LCT_match_GE2_WGMin", &LCT_match_GE2_WGMin);
   t->Branch("LCT_match_GE1_WGMax", &LCT_match_GE1_WGMax); t->Branch("LCT_match_GE2_WGMax", &LCT_match_GE2_WGMax);
+  t->Branch("LCT_match_GE1_roll", &LCT_match_GE2_roll); t->Branch("LCT_match_GE2_roll", &LCT_match_GE2_roll);
   t->Branch("LCT_all_GE1_pads_ES", &LCT_all_GE1_pads_ES); t->Branch("LCT_all_GE2_pads_ES", &LCT_all_GE2_pads_ES);
   t->Branch("LCT_all_GE1_bxs", &LCT_all_GE1_bxs); t->Branch("LCT_all_GE2_bxs", &LCT_all_GE2_bxs);
   t->Branch("LCT_all_GE1_WGMin", &LCT_all_GE1_WGMin); t->Branch("LCT_all_GE2_WGMin", &LCT_all_GE2_WGMin);
   t->Branch("LCT_all_GE1_WGMax", &LCT_all_GE1_WGMax); t->Branch("LCT_all_GE2_WGMax", &LCT_all_GE2_WGMax);
   t->Branch("LCT_slope_with_GE1", &LCT_slope_with_GE1); t->Branch("LCT_slope_with_GE2", &LCT_slope_with_GE2);
   t->Branch("LCT_BendingAngle_GE1", &LCT_BendingAngle_GE1); t->Branch("LCT_BendingAngle_GE2", &LCT_BendingAngle_GE2);
+  t->Branch("BendingAngleRealistic", &BendingAngleRealistic);
 
   //============ L1Muon Match =============//
   t->Branch("l1muon_pt", &l1muon_pt);
@@ -301,6 +312,7 @@ TTree* LCTL1MuonMatcher::book(TTree *t){
 
     t->Branch("z_cand", &z_cand);
     t->Branch("z_mass", &z_mass);
+    t->Branch("z_opposite_charge", &z_opposite_charge);
     t->Branch("lct_to_zmu_idx", &lct_to_zmu_idx);
 
   return t;
@@ -330,6 +342,9 @@ private:
   edm::Handle<EMTFTrackCollection> emtf_tracks;
   edm::EDGetTokenT<edm::View<reco::Muon> > muon_token;
   edm::Handle<View<reco::Muon> > muons;
+  edm::EDGetTokenT<reco::VertexCollection> vertexCollection_token;
+  edm::Handle<reco::VertexCollection> vertexCollection;
+
 
 
   edm::Service<TFileService> fs;
@@ -340,6 +355,12 @@ private:
 
   LCTL1MuonMatcher data_;
   TTree* tree;
+
+  LCTL1MuonMatcher dataHighestEMTF_;
+  TTree* treeHighestEMTF;
+
+  LCTL1MuonMatcher dataOnlyRecos_;
+  TTree* treeOnlyRecos;
 
   edm::ESHandle<GEMGeometry> GEMGeometry_;
   edm::ESHandle<CSCGeometry> CSCGeometry_;
@@ -457,6 +478,7 @@ GEMCSCBendingAngleTester::GEMCSCBendingAngleTester(const edm::ParameterSet& iCon
   emtf_muon_token = consumes<RegionalMuonCandBxCollection>(iConfig.getParameter<edm::InputTag>("emtf_muon_token"));
   emtf_track_token = consumes<EMTFTrackCollection>(iConfig.getParameter<edm::InputTag>("emtf_track_token"));
   muon_token = consumes<View<reco::Muon> >(iConfig.getParameter<InputTag>("muon_token"));
+  vertexCollection_token = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollection_token"));
 
   luts_folder = iConfig.getParameter<string>("luts_folder");
 
@@ -464,8 +486,9 @@ GEMCSCBendingAngleTester::GEMCSCBendingAngleTester(const edm::ParameterSet& iCon
   debug = iConfig.getParameter<bool>("debug");
   std::cout << "debug " << debug << std::endl;
 
-  tree = data_.book(tree);
-
+  tree = data_.book(tree, "AllLCTs");
+  treeHighestEMTF = dataHighestEMTF_.book(treeHighestEMTF, "HighestEMTFpT");
+  treeOnlyRecos = dataOnlyRecos_.book(treeOnlyRecos, "OnlyRecos");
 
 
   //Maps for the CSC LCT Slope Extrapolation (CSC LCT -> GEM Layers)
@@ -539,6 +562,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(emtf_muon_token, emtf_muons);
   iEvent.getByToken(emtf_track_token, emtf_tracks);
   iEvent.getByToken(muon_token, muons);
+  iEvent.getByToken(vertexCollection_token, vertexCollection);
 
 
   if (debug) cout << "New! EventNumber = " << iEvent.eventAuxiliary().event() << " LumiBlock = " << iEvent.eventAuxiliary().luminosityBlock() << " RunNumber = " << iEvent.run() << endl;
@@ -550,34 +574,48 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
   std::cout << "There are " << emtf_tracks->size() << " EMTF Tracks" << std::endl;
   std::cout << "There are " << muons->size() << " RECO Muons" << std::endl;
 
+  //Init highest EMTF data struct
+  dataHighestEMTF_.init();
+  //Set the EMTFTrack pT to -1 since this will be our discriminator
+  dataHighestEMTF_.emtftrack_pt = -1;
 
   int zmu_cand_idx1 = 99;
   int zmu_cand_idx2 = 99;
   float zmu_cand_mass = 1000.0;
   float zmass = 91.1876;
+  bool z_opposite_charge = false;
   TLorentzVector vec1;
   TLorentzVector vec2;
   TLorentzVector comb;
-  if (muons->size() != 0){
-    for (size_t i = 0; i < muons->size(); ++i){
-      edm::RefToBase<reco::Muon> muRef = muons->refAt(i);
-      const reco::Muon* mu = muRef.get();
-      if (not (mu->isGlobalMuon())) continue;
-      for (size_t j = i+1; j < muons->size(); ++j){
-        edm::RefToBase<reco::Muon> muRef2 = muons->refAt(j);
-        const reco::Muon* mu2 = muRef2.get();
-        if (not (mu2->isGlobalMuon())) continue;
-        std::cout << "Global pair " << i << " " << j << std::endl;
-        vec1.SetPtEtaPhiE(mu->pt(), mu->eta(), mu->phi(), mu->energy());
-        vec2.SetPtEtaPhiE(mu2->pt(), mu2->eta(), mu2->phi(), mu2->energy());
-        comb = vec1 + vec2;
-        std::cout << "Combined mass is " << comb.M() << " from m1 " << vec1.M() << " and m2 " << vec2.M() << std::endl;
-        std::cout << "Their charges are " << mu->charge() << " " << mu2->charge() << std::endl;
-        if (mu->charge() != mu2->charge()){
+
+
+  if (vertexCollection->size() > 0){
+    auto primary_vertex = vertexCollection->at(0);
+    if (muons->size() != 0){
+      for (size_t i = 0; i < muons->size(); ++i){
+        edm::RefToBase<reco::Muon> muRef = muons->refAt(i);
+        const reco::Muon* mu = muRef.get();
+        if (not (mu->isGlobalMuon())) continue;
+        if (not (muon::isTightMuon(*mu, primary_vertex))) continue;
+        for (size_t j = i+1; j < muons->size(); ++j){
+          edm::RefToBase<reco::Muon> muRef2 = muons->refAt(j);
+          const reco::Muon* mu2 = muRef2.get();
+          if (not (mu2->isGlobalMuon())) continue;
+          std::cout << "Global pair " << i << " " << j << std::endl;
+          vec1.SetPtEtaPhiE(mu->pt(), mu->eta(), mu->phi(), mu->energy());
+          vec2.SetPtEtaPhiE(mu2->pt(), mu2->eta(), mu2->phi(), mu2->energy());
+          comb = vec1 + vec2;
+          std::cout << "Combined mass is " << comb.M() << " from m1 " << vec1.M() << " and m2 " << vec2.M() << std::endl;
+          std::cout << "Their charges are " << mu->charge() << " " << mu2->charge() << std::endl;
+          
           if (abs(comb.M() - zmass) < abs(zmu_cand_mass - zmass)){
             zmu_cand_idx1 = i;
             zmu_cand_idx2 = j;
             zmu_cand_mass = comb.M();
+            if (mu->charge() != mu2->charge()){
+              z_opposite_charge = true;
+            }
+            if (z_opposite_charge) std::cout << "Nice" << std::endl;
           }
         }
       }
@@ -595,6 +633,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
     std::vector<CSCCorrelatedLCTDigi>::const_iterator last = (*j).second.second;
     for (; CSCCorrLCT != last; ++CSCCorrLCT){
       data_.init();
+      dataOnlyRecos_.init();
       data_.evtNum = iEvent.eventAuxiliary().event();
       data_.lumiBlock = iEvent.eventAuxiliary().luminosityBlock();
       data_.runNum = iEvent.run();
@@ -713,6 +752,55 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           vector<int> tmp_all_L1_bxs;
           vector<int> tmp_all_L1_WGMin;
           vector<int> tmp_all_L1_WGMax;
+
+          //8Oct2024 New Idea from Giovanni to fix weird +/- Muon Bending Distributions
+          //Instead of matching to invididual pads, try to match to center of clusters
+          for (; digiItr != last; ++digiItr) {
+            int digiBX = digiItr->bx();
+            int digiALCTMatch = digiItr->alctMatchTime();
+            int delayGEMinOTMB = 1;
+            int tmbL1aWindowSize = 7;
+            int CSCConstants_LCT_CENTRAL_BX = 8;
+            int adjustedBX = digiBX + CSCConstants_LCT_CENTRAL_BX - int(tmbL1aWindowSize/2.0) - digiALCTMatch + delayGEMinOTMB;
+
+            int centralClusterPad = int((digiItr->pads().front())+(digiItr->pads().size()/2.0));
+
+            //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0); //After P5 tests in 2024, we noticed the negative endcap LUT sign should be flipped, this line is no longer needed
+            int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey];
+            if (use_alignment == false) align_corr_tmp = 0;
+            int tmp_delta_es = data_.LCT_GE1_strip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+            int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
+            int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
+            tmp_all_L1_pads.push_back(DigiToESMap[centralClusterPad]);
+            tmp_all_L1_pads_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp);
+            tmp_all_L1_bxs.push_back(adjustedBX);
+            tmp_all_L1_WGMin.push_back(WG_Min);
+            tmp_all_L1_WGMax.push_back(WG_Max);
+            if ((abs(tmp_delta_es) < abs(data_.LCT_match_GE1_residual)) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+              data_.has_LCT_match1 = true;
+              data_.LCT_match_GE1_residual = tmp_delta_es;
+              if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
+              data_.LCT_match_GE1_pad = centralClusterPad;
+              data_.LCT_match_GE1_BX = adjustedBX;
+              data_.LCT_match_GE1_padES = DigiToESMap[centralClusterPad];
+              data_.LCT_match_GE1_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp;
+              data_.LCT_match_GE1_WGMin = WG_Min;
+              data_.LCT_match_GE1_WGMax = WG_Max;
+              data_.LCT_match_GE1_roll = GEMPadDigiDetID.roll();
+
+              data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
+              data_.LCT_BendingAngle_GE1 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+            }
+          }
+          data_.LCT_all_GE1_pads_ES = tmp_all_L1_pads;
+          data_.LCT_all_GE1_pads_ES_aligned = tmp_all_L1_pads_aligned;
+          data_.LCT_all_GE1_bxs = tmp_all_L1_bxs;
+          data_.LCT_all_GE1_WGMin = tmp_all_L1_WGMin;
+          data_.LCT_all_GE1_WGMax = tmp_all_L1_WGMax;
+        }
+
+        /*
+          //Old method of individual pads, now dead ):
           for (; digiItr != last; ++digiItr) {
             int digiBX = digiItr->bx();
             int digiALCTMatch = digiItr->alctMatchTime();
@@ -762,6 +850,15 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           data_.LCT_all_GE1_WGMin = tmp_all_L1_WGMin;
           data_.LCT_all_GE1_WGMax = tmp_all_L1_WGMax;
         }
+        */
+
+
+
+
+
+
+
+
 
 
         if ((data_.LCT_GE2_region ==  GEMPadDigiDetID.region()) and (data_.LCT_GE2_station == GEMPadDigiDetID.station()) and (data_.LCT_GE2_ring == GEMPadDigiDetID.ring()) and (data_.LCT_GE2_chamber == GEMPadDigiDetID.chamber()) and (data_.LCT_GE2_layer == GEMPadDigiDetID.layer()) and data_.has_LCT_prop2){
@@ -803,35 +900,36 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
             int tmbL1aWindowSize = 7;
             int CSCConstants_LCT_CENTRAL_BX = 8;
             int adjustedBX = digiBX + CSCConstants_LCT_CENTRAL_BX - int(tmbL1aWindowSize/2.0) - digiALCTMatch + delayGEMinOTMB;
-            for (int pad: digiItr->pads()){
-              if (debug and (data_.LCT_quality == 6)) cout << " pad:ES " << pad << ":" << DigiToESMap[pad] << endl;
-              //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] * (-1.0) : AlignCorrMap[AlignCorrKey];
-              //int align_corr_tmp = AlignCorrMap[AlignCorrKey]; //For now we show alignment needs the flip
-              int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0);
-              if (use_alignment == false) align_corr_tmp = 0;
-              int tmp_delta_es = data_.LCT_GE2_strip - (DigiToESMap[pad] + align_corr_tmp);
-              int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
-              int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
-              tmp_all_L2_pads.push_back(DigiToESMap[pad]);
-              tmp_all_L2_aligned.push_back(DigiToESMap[pad] + align_corr_tmp);
-              tmp_all_L2_bxs.push_back(adjustedBX);
-              tmp_all_L2_WGMin.push_back(WG_Min);
-              tmp_all_L2_WGMax.push_back(WG_Max);
-              if ((abs(tmp_delta_es) < abs(data_.LCT_match_GE2_residual)) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
-                data_.has_LCT_match2 = true;
-                data_.LCT_match_GE2_residual = tmp_delta_es;
-                if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
-                data_.LCT_match_GE2_pad = pad;
-                data_.LCT_match_GE2_BX = adjustedBX;
-                data_.LCT_match_GE2_padES = DigiToESMap[pad];
-                data_.LCT_match_GE2_padES_aligned = DigiToESMap[pad] + align_corr_tmp;
-                data_.LCT_match_GE2_WGMin = WG_Min;
-                data_.LCT_match_GE2_WGMax = WG_Max;
 
-                data_.LCT_slope_with_GE2 = SlopeAmendMap[abs((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[pad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
-                data_.LCT_BendingAngle_GE2 = data_.LCT_eighthstrip - (DigiToESMap[pad] + align_corr_tmp);
+            int centralClusterPad = int((digiItr->pads().front())+(digiItr->pads().size()/2.0));
 
-              }
+
+            //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0); //After P5 tests in 2024, we noticed the negative endcap LUT sign should be flipped, this line is no longer needed
+            int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey];
+            if (use_alignment == false) align_corr_tmp = 0;
+            int tmp_delta_es = data_.LCT_GE2_strip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+            int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
+            int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
+            tmp_all_L2_pads.push_back(DigiToESMap[centralClusterPad]);
+            tmp_all_L2_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp);
+            tmp_all_L2_bxs.push_back(adjustedBX);
+            tmp_all_L2_WGMin.push_back(WG_Min);
+            tmp_all_L2_WGMax.push_back(WG_Max);
+            if ((abs(tmp_delta_es) < abs(data_.LCT_match_GE2_residual)) and ((WG_Min - delta_wg) < data_.LCT_wiregroup) and (data_.LCT_wiregroup < (WG_Max + delta_wg))){
+              data_.has_LCT_match2 = true;
+              data_.LCT_match_GE2_residual = tmp_delta_es;
+              if (debug) cout << "Filled residual with " << tmp_delta_es << endl;
+              data_.LCT_match_GE2_pad = centralClusterPad;
+              data_.LCT_match_GE2_BX = adjustedBX;
+              data_.LCT_match_GE2_padES = DigiToESMap[centralClusterPad];
+              data_.LCT_match_GE2_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp;
+              data_.LCT_match_GE2_WGMin = WG_Min;
+              data_.LCT_match_GE2_WGMax = WG_Max;
+              data_.LCT_match_GE2_roll = GEMPadDigiDetID.roll();
+
+              data_.LCT_slope_with_GE2 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
+              data_.LCT_BendingAngle_GE2 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+
             }
           }
           data_.LCT_all_GE2_pads_ES = tmp_all_L2_pads;
@@ -841,6 +939,10 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           data_.LCT_all_GE2_WGMax = tmp_all_L2_WGMax;
         }
       }
+      //Real FW will take the OR of bending angle with priority to L1, lets mimic that
+
+      data_.BendingAngleRealistic = data_.has_LCT_match1 ? data_.LCT_BendingAngle_GE1 : data_.LCT_BendingAngle_GE2;
+
       auto CSCDetIdL4 = CSCDetId(LCTDetId.endcap(), LCTDetId.station(), LCTDetId.ring(), LCTDetId.chamber(), 4);
       const CSCLayer* ME11_layer = CSCGeometry_->layer(CSCDetIdL4);
       const CSCLayerGeometry* ME11_layer_geo = ME11_layer->geometry();
@@ -897,7 +999,8 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
             for (unsigned int hit_id = 0; hit_id < emtf_hits.size(); ++hit_id) {
               const auto& hit = emtf_hits.at(hit_id);
               if (hit.Is_CSC() != 1) continue;
-              if ((hit.Station() != 1) || (hit.Ring() != 1)) continue;
+              if (hit.Station() != 1) continue;
+              if (!(hit.Ring() == 1 || hit.Ring() == 4)) continue;
               has_me11 = true;
               n_me11_lcts++;
               if ((debug) or (true)){
@@ -976,6 +1079,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 tmp_dR = new_dR;
                 data_.z_cand = ((int(i) == zmu_cand_idx1) or (int(i) == zmu_cand_idx2));
                 data_.z_mass = data_.z_cand ? zmu_cand_mass : 99999;
+                data_.z_opposite_charge = z_opposite_charge;
                 data_.lct_to_zmu_idx = data_.z_cand ? int(i) : 99999;
               }
             }
@@ -989,7 +1093,22 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
 
       }
       tree->Fill();
+      if (data_.has_reco_l1_match){
+        dataOnlyRecos_ = data_;
+        treeOnlyRecos->Fill();
+      }
+      //At the end of the GEM loop (and LCT loops inherently)
+      //Check if this has a higher emtftrack_pt than the current highest
+      //Have to add an extra check for 99999 due to initalized value
+      if ((data_.emtftrack_pt > dataHighestEMTF_.emtftrack_pt) and (data_.emtftrack_pt < 99999)){
+        dataHighestEMTF_ = data_;
+      }
     }
+  }
+  //This is the end of the event, save the highest tree now
+  //But if the tree was never filled (no LCTs in event, no GEM Match) then we don't care
+  if (dataHighestEMTF_.emtftrack_pt >= 0){
+    treeHighestEMTF->Fill();
   }
 }
 
