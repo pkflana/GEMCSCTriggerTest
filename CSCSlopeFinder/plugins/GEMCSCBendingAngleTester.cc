@@ -146,6 +146,7 @@ struct LCTL1MuonMatcher
   bool has_reco_l1_match;
   float reco_l1_match_dR;
   float reco_l1_match_pt;
+  float reco_l1_match_charge;
 
   bool z_cand;
   float z_mass;
@@ -227,6 +228,7 @@ void LCTL1MuonMatcher::init()
   has_reco_l1_match = false;
   reco_l1_match_dR = value;
   reco_l1_match_pt = value;
+  reco_l1_match_charge = value;
 
   z_cand = false;
   z_mass = value;
@@ -309,6 +311,7 @@ TTree* LCTL1MuonMatcher::book(TTree *t, const char *name){
     t->Branch("has_reco_l1_match", &has_reco_l1_match);
     t->Branch("reco_l1_match_dR", &reco_l1_match_dR);
     t->Branch("reco_l1_match_pt", &reco_l1_match_pt);
+    t->Branch("reco_l1_match_charge", &reco_l1_match_charge);
 
     t->Branch("z_cand", &z_cand);
     t->Branch("z_mass", &z_mass);
@@ -430,6 +433,16 @@ private:
   string GEMAlignmentCorrectionsNegativeName;
   map<int, int> GEMAlignmentCorrectionsNegative_Map;
 
+  string GEMAlignmentExtraCorrPositiveL1Name;
+  map<int, int> GEMAlignmentExtraCorrPositiveL1_Map;
+  string GEMAlignmentExtraCorrPositiveL2Name;
+  map<int, int> GEMAlignmentExtraCorrPositiveL2_Map;
+  
+  string GEMAlignmentExtraCorrNegativeL1Name;
+  map<int, int> GEMAlignmentExtraCorrNegativeL1_Map;
+  string GEMAlignmentExtraCorrNegativeL2Name;
+  map<int, int> GEMAlignmentExtraCorrNegativeL2_Map;
+
 
   //Maps for the CSC LCT Slope Adjustment (CSC LCT Slope -> Slope with GEM)
   //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
@@ -529,6 +542,13 @@ GEMCSCBendingAngleTester::GEMCSCBendingAngleTester(const edm::ParameterSet& iCon
   //Split by +/- endcap
   GEMAlignmentCorrectionsPositiveName = luts_folder + "/GEMCSC/AlignmentCorrection/GEMCSCLUT_align_corr_es_ME11_positive_endcap.txt";
   GEMAlignmentCorrectionsNegativeName = luts_folder + "/GEMCSC/AlignmentCorrection/GEMCSCLUT_align_corr_es_ME11_negative_endcap.txt";
+
+  //Maps for additional GEM Alignment Corrects (After Offline)
+  //Split by +/- endcap
+  GEMAlignmentExtraCorrPositiveL1Name = luts_folder + "/GEMCSC/AlignmentCorrection/additional_corr_positive_endcap_L1.txt";
+  GEMAlignmentExtraCorrPositiveL2Name = luts_folder + "/GEMCSC/AlignmentCorrection/additional_corr_positive_endcap_L2.txt";
+  GEMAlignmentExtraCorrNegativeL1Name = luts_folder + "/GEMCSC/AlignmentCorrection/additional_corr_negative_endcap_L1.txt";
+  GEMAlignmentExtraCorrNegativeL2Name = luts_folder + "/GEMCSC/AlignmentCorrection/additional_corr_negative_endcap_L2.txt";
 
   //Maps for the CSC LCT Slope Adjustment (CSC LCT Slope -> Slope with GEM)
   //Split by Even/Odd, by L1/L2, and by ME11a/ME11b (8 cases)
@@ -731,6 +751,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           //Measured with GEMHit - PropHit, so we can add alignment corr to the prop
           //To use AlignCorr map, we have AlignCorrMap[chEta]
           map<int, int> AlignCorrMap = (GEMPadDigiDetID.region() == 1) ? GEMAlignmentCorrectionsPositive_Map : GEMAlignmentCorrectionsNegative_Map;
+          map<int, int> ExtraCorrMap = (GEMPadDigiDetID.region() == 1) ? GEMAlignmentExtraCorrPositiveL1_Map : GEMAlignmentExtraCorrNegativeL1_Map;
           int AlignCorrKey = GEMPadDigiDetID.chamber() * 10 + GEMPadDigiDetID.roll();
 
           if (data_.LCT_CSC_ME1a){
@@ -767,12 +788,13 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
 
             //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0); //After P5 tests in 2024, we noticed the negative endcap LUT sign should be flipped, this line is no longer needed
             int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey];
+            int extra_corr_tmp = (GEMPadDigiDetID.region() == 1) ? ExtraCorrMap[AlignCorrKey] : ExtraCorrMap[AlignCorrKey];
             if (use_alignment == false) align_corr_tmp = 0;
-            int tmp_delta_es = data_.LCT_GE1_strip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+            int tmp_delta_es = data_.LCT_GE1_strip - (DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp);
             int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
             int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
             tmp_all_L1_pads.push_back(DigiToESMap[centralClusterPad]);
-            tmp_all_L1_pads_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp);
+            tmp_all_L1_pads_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp);
             tmp_all_L1_bxs.push_back(adjustedBX);
             tmp_all_L1_WGMin.push_back(WG_Min);
             tmp_all_L1_WGMax.push_back(WG_Max);
@@ -783,13 +805,13 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
               data_.LCT_match_GE1_pad = centralClusterPad;
               data_.LCT_match_GE1_BX = adjustedBX;
               data_.LCT_match_GE1_padES = DigiToESMap[centralClusterPad];
-              data_.LCT_match_GE1_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp;
+              data_.LCT_match_GE1_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp;
               data_.LCT_match_GE1_WGMin = WG_Min;
               data_.LCT_match_GE1_WGMax = WG_Max;
               data_.LCT_match_GE1_roll = GEMPadDigiDetID.roll();
 
-              data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
-              data_.LCT_BendingAngle_GE1 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+              data_.LCT_slope_with_GE1 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp) - data_.LCT_eighthstrip) < 0);
+              data_.LCT_BendingAngle_GE1 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp);
             }
           }
           data_.LCT_all_GE1_pads_ES = tmp_all_L1_pads;
@@ -872,6 +894,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
           //Measured with GEMHit - PropHit, so we can add alignment corr to the prop
           //To use AlignCorr map, we have AlignCorrMap[chEta]
           map<int, int> AlignCorrMap = (GEMPadDigiDetID.region() == 1) ? GEMAlignmentCorrectionsPositive_Map : GEMAlignmentCorrectionsNegative_Map;
+          map<int, int> ExtraCorrMap = (GEMPadDigiDetID.region() == 1) ? GEMAlignmentExtraCorrPositiveL2_Map : GEMAlignmentExtraCorrNegativeL2_Map;
           int AlignCorrKey = GEMPadDigiDetID.chamber() * 10 + GEMPadDigiDetID.roll();
           if (data_.LCT_CSC_ME1a){
             DigiToESMap = (data_.LCT_GE2_chamber%2 == 0) ? GEMPadDigiToCSCEigthStripME11aEven_Map : GEMPadDigiToCSCEigthStripME11aOdd_Map;
@@ -906,12 +929,13 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
 
             //int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey] * (-1.0); //After P5 tests in 2024, we noticed the negative endcap LUT sign should be flipped, this line is no longer needed
             int align_corr_tmp = (GEMPadDigiDetID.region() == 1) ? AlignCorrMap[AlignCorrKey] : AlignCorrMap[AlignCorrKey];
+            int extra_corr_tmp = (GEMPadDigiDetID.region() == 1) ? ExtraCorrMap[AlignCorrKey] : ExtraCorrMap[AlignCorrKey];
             if (use_alignment == false) align_corr_tmp = 0;
             int tmp_delta_es = data_.LCT_GE2_strip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
             int WG_Max = WGMaxMap[GEMPadDigiDetID.roll()-1];
             int WG_Min = WGMinMap[GEMPadDigiDetID.roll()-1];
             tmp_all_L2_pads.push_back(DigiToESMap[centralClusterPad]);
-            tmp_all_L2_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp);
+            tmp_all_L2_aligned.push_back(DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp);
             tmp_all_L2_bxs.push_back(adjustedBX);
             tmp_all_L2_WGMin.push_back(WG_Min);
             tmp_all_L2_WGMax.push_back(WG_Max);
@@ -922,13 +946,13 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
               data_.LCT_match_GE2_pad = centralClusterPad;
               data_.LCT_match_GE2_BX = adjustedBX;
               data_.LCT_match_GE2_padES = DigiToESMap[centralClusterPad];
-              data_.LCT_match_GE2_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp;
+              data_.LCT_match_GE2_padES_aligned = DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp;
               data_.LCT_match_GE2_WGMin = WG_Min;
               data_.LCT_match_GE2_WGMax = WG_Max;
               data_.LCT_match_GE2_roll = GEMPadDigiDetID.roll();
 
-              data_.LCT_slope_with_GE2 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp) - data_.LCT_eighthstrip) < 0);
-              data_.LCT_BendingAngle_GE2 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp);
+              data_.LCT_slope_with_GE2 = SlopeAmendMap[abs((DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp) - data_.LCT_eighthstrip)]*pow(-1.0, ((DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp) - data_.LCT_eighthstrip) < 0);
+              data_.LCT_BendingAngle_GE2 = data_.LCT_eighthstrip - (DigiToESMap[centralClusterPad] + align_corr_tmp + extra_corr_tmp);
 
             }
           }
@@ -1076,6 +1100,7 @@ GEMCSCBendingAngleTester::analyze(const edm::Event& iEvent, const edm::EventSetu
                 data_.has_reco_l1_match = true;
                 data_.reco_l1_match_dR = new_dR;
                 data_.reco_l1_match_pt = mu->pt();
+                data_.reco_l1_match_charge = mu->charge();
                 tmp_dR = new_dR;
                 data_.z_cand = ((int(i) == zmu_cand_idx1) or (int(i) == zmu_cand_idx2));
                 data_.z_mass = data_.z_cand ? zmu_cand_mass : 99999;
@@ -1171,6 +1196,11 @@ void GEMCSCBendingAngleTester::beginJob(){
 
   fillMap(GEMAlignmentCorrectionsPositive_Map, GEMAlignmentCorrectionsPositiveName);
   fillMap(GEMAlignmentCorrectionsNegative_Map, GEMAlignmentCorrectionsNegativeName);
+
+  fillMap(GEMAlignmentExtraCorrPositiveL1_Map, GEMAlignmentExtraCorrPositiveL1Name);
+  fillMap(GEMAlignmentExtraCorrPositiveL2_Map, GEMAlignmentExtraCorrPositiveL2Name);
+  fillMap(GEMAlignmentExtraCorrNegativeL1_Map, GEMAlignmentExtraCorrNegativeL1Name);
+  fillMap(GEMAlignmentExtraCorrNegativeL2_Map, GEMAlignmentExtraCorrNegativeL2Name);
 
   fillMap(SlopeAmendmentME11aEvenL1_Map, SlopeAmendmentME11aEvenL1Name);
   fillMap(SlopeAmendmentME11aEvenL2_Map, SlopeAmendmentME11aEvenL2Name);
