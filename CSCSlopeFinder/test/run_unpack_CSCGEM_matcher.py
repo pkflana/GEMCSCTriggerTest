@@ -377,7 +377,7 @@ process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
 )
 process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
 
-process.schedule.extend([process.p7])
+#process.schedule.extend([process.p7])
 
 
 process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader', 
@@ -389,7 +389,7 @@ process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader',
 
 process.p8 = cms.EndPath(process.CSCEmulatorReader)
 
-process.schedule.extend([process.p8])
+#process.schedule.extend([process.p8])
 
 
 process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester', 

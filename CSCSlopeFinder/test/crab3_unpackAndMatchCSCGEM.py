@@ -3,8 +3,14 @@ from CRABClient.UserUtilities import config
 config = config()
 ###2018runA  314472-318876
 #section general
-config.General.requestName = '2024E_ZMu_8July2024' #'2024E_Muon0_Zmu_28June2024'
-config.General.workArea = '2024E_ZMu_8July2024'#working dir 
+
+
+config.General.requestName = '2024_ZMu_31Mar2025' #'2024G_ZeroBias_22Aug2024' #'2024E_Muon0_Zmu_28June2024'
+config.General.workArea = '2024_ZMu_31Mar2025' #'2024G_ZeroBias_22Aug2024'#working dir 
+
+#config.General.requestName = '2024_ZeroBias_31Mar2025'
+#config.General.workArea = '2024_ZeroBias_31Mar2025'#working dir
+
 config.General.transferOutputs = True
 config.General.transferLogs = True
 
@@ -21,17 +27,23 @@ config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_14_0
 #config.JobType.inputFiles
 
 
-#config.Data.inputDataset = '/ZeroBias/Run2024E-LogError-PromptReco-v2/RAW-RECO'
-config.Data.inputDataset = '/Muon0/Run2024E-ZMu-PromptReco-v2/RAW-RECO'
-#config.Data.runRange = '381365'
+# config.Data.inputDataset = '/EphemeralZeroBias0/Run2024I-PromptReco-v1/MINIAOD'
+# config.Data.secondaryInputDataset = '/EphemeralZeroBias0/Run2024I-v1/RAW'
+# config.Data.useParent = True # This allows us to put MiniAOD as the input, and it will find the parent files for the RAW parts
+# # I never got the Ephemeral to work ):
+
+#config.Data.inputDataset = '/ZeroBias/Run2024I-LogError-PromptReco-v2/RAW-RECO'
+config.Data.inputDataset = '/Muon0/Run2024I-ZMu-PromptReco-v1/RAW-RECO'
+#config.Data.runRange = '381384'
 
 #config.Data.inputDBS = 'phys03'
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'FileBased'
 #config.Data.splitting = 'LumiBased'
 #config.Data.splitting = 'Automatic'
-config.Data.unitsPerJob = 10
-config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024E_ZMu/'
+config.Data.unitsPerJob = 1
+#config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024_ZeroBias/'
+config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024_ZMu/'
 config.Data.publication = False
 config.Data.outputDatasetTag = config.General.requestName
 #config.Site.storageSite = 'T3_US_FNALLPC'
