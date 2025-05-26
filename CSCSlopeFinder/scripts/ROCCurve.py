@@ -4,9 +4,9 @@ import argparse
 import numpy as np
 from scipy.stats import beta
 
-def make_plotdir(plotdir):
-    if not os.path.exists(plotdir):
-        os.makedirs(plotdir)
+if __name__ == "__main__":
+    sys.path.append(os.environ['ANALYSIS_PATH'])
+from GEM-CSC-trg-dev.scripts.plot_tool import *
 
 def get_rdfs(sig_file, bkg_file, sig_tree, bkg_tree):
     f_sig = ROOT.TFile(sig_file)
@@ -14,9 +14,9 @@ def get_rdfs(sig_file, bkg_file, sig_tree, bkg_tree):
     event_sig = f_sig.Get(sig_tree)
     event_bkg = f_bkg.Get(bkg_tree)
     rdf_sig = ROOT.RDataFrame(event_sig)
-    ROOT.RDF.Experimental.AddProgressBar(rdf_sig)
+    add_progress_bar(rdf_sig)
     rdf_bkg = ROOT.RDataFrame(event_bkg)
-    ROOT.RDF.Experimental.AddProgressBar(rdf_bkg)
+    add_progress_bar(rdf_bkg)
     return rdf_sig, rdf_bkg
 
 def compute_roc_points(rdf_sig, rdf_bkg, cut_sig, cut_bkg, ba_var, ba_range):
@@ -67,15 +67,12 @@ def main():
     parser.add_argument('--ba_min', type=int, default=-6)
     parser.add_argument('--ba_max', type=int, default=50)
     parser.add_argument('--doBaMin', action='store_true')
+    parser.add_argument('--plotdir', default="plots/ROCCurve/", type=str)
     args = parser.parse_args()
 
     make_plotdir(args.plotdir)
-
-    ROOT.gROOT.SetBatch(1)
-    # tdrstyle.setTDRStyle() # Uncomment if you have tdrstyle
-
-    ROOT.EnableImplicitMT(16)
-
+    set_batch()
+    enable_mt(16)
     # Cuts and variables
     dRmatch = 0.4
     base_cut = f"has_emtf_track_match & has_LCT_match{args.layer}"
