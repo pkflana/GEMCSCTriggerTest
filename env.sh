@@ -1,3 +1,8 @@
+apply_cmssw_customization_steps() {
+    run_cmd mkdir GEMCSCTriggerTest
+    run_cmd ln -s "$ANALYSIS_PATH/CSCSlopeFinder" GEMCSCTriggerTest/CSCSlopeFinder
+}
+
 
 CMSSW_VERSION="CMSSW_14_2_0_pre1"
 
@@ -9,7 +14,9 @@ action() {
     echo "Running action with CMSSW version: $CMSSW_VERSION"
 
     source $ANALYSIS_PATH/GEM-CSC-trg-dev/env.sh "$this_file_path" "$CMSSW_VERSION" "$@"
+    ln -fs "$ANALYSIS_PATH/GEM-CSC-trg-dev/luts" "$ANALYSIS_PATH/CSCSlopeFinder/luts"
 }
 
 action "$@"
 unset -f action
+unset -f apply_cmssw_customization_steps

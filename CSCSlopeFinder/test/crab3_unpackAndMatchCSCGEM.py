@@ -5,8 +5,8 @@ config = config()
 #section general
 
 
-config.General.requestName = '2024_ZMu_31Mar2025' #'2024G_ZeroBias_22Aug2024' #'2024E_Muon0_Zmu_28June2024'
-config.General.workArea = '2024_ZMu_31Mar2025' #'2024G_ZeroBias_22Aug2024'#working dir 
+config.General.requestName = 'Run2024I-ZMu' #'2024G_ZeroBias_22Aug2024' #'2024E_Muon0_Zmu_28June2024'
+config.General.workArea = 'Run2024I-ZMu' #'2024G_ZeroBias_22Aug2024'#working dir
 
 #config.General.requestName = '2024_ZeroBias_31Mar2025'
 #config.General.workArea = '2024_ZeroBias_31Mar2025'#working dir
@@ -18,10 +18,14 @@ config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'run_unpack_CSCGEM_matcher.py'
 config.JobType.maxMemoryMB = 2000
-config.JobType.maxJobRuntimeMin = 1440 # 1440min = 24hours
+config.JobType.maxJobRuntimeMin = 420 # 7hrs # 1440min = 24hours
 config.JobType.numCores = 1
 config.JobType.allowUndistributedCMSSW = True
-config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_14_0_7/src/GEMCSCTriggerTest/CSCSlopeFinder/luts']
+# config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_14_0_7/src/GEMCSCTriggerTest/CSCSlopeFinder/luts']
+# config.JobType.inputFiles = ['/afs/cern.ch/work/v/vdamante/GEM_CSC_Development/GEMCSCTriggerTest/CSCSlopeFinder/luts']
+
+config.JobType.inputFiles = ['/afs/cern.ch/work/v/vdamante/GEM_CSC_Development/GEMCSCTriggerTest/soft/CMSSW_14_2_0_pre1/src/GEMCSCTriggerTest/CSCSlopeFinder/luts']
+
 #config.JobType.generator
 #config.JobType.pyCfgParams
 #config.JobType.inputFiles
@@ -33,17 +37,19 @@ config.JobType.inputFiles = ['/afs/cern.ch/work/d/daebi/gemcsctrigger/CMSSW_14_0
 # # I never got the Ephemeral to work ):
 
 #config.Data.inputDataset = '/ZeroBias/Run2024I-LogError-PromptReco-v2/RAW-RECO'
+# config.Data.inputDataset = '/Muon0/Run2024I-ZMu-PromptReco-v1/RAW-RECO'
 config.Data.inputDataset = '/Muon0/Run2024I-ZMu-PromptReco-v1/RAW-RECO'
+
 #config.Data.runRange = '381384'
 
 #config.Data.inputDBS = 'phys03'
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'FileBased'
-#config.Data.splitting = 'LumiBased'
-#config.Data.splitting = 'Automatic'
-config.Data.unitsPerJob = 1
+# config.Data.splitting = 'LumiBased'
+# config.Data.splitting = 'Automatic'
+config.Data.unitsPerJob = 5
 #config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024_ZeroBias/'
-config.Data.outLFNDirBase = '/store/user/daebi/GEMCSCTrigger/2024_ZMu/'
+config.Data.outLFNDirBase = '/store/user/vdamante/GEMCSCTrigger/2024_ZMu/'
 config.Data.publication = False
 config.Data.outputDatasetTag = config.General.requestName
 #config.Site.storageSite = 'T3_US_FNALLPC'
