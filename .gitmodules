@@ -1,0 +1,3 @@
+[submodule "GEM-CSC-trg-dev"]
+	path = GEM-CSC-trg-dev
+	url = git@github.com:GEM-CSC-Trg/GEM-CSC-trg-dev.git

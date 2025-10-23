@@ -18,7 +18,7 @@ options.register("l1", True, VarParsing.multiplicity.singleton, VarParsing.varTy
                  "Set to True when you want to re-emulate the CSC trigger primitives.")
 options.register("l1GEM", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to re-emulate the GEM trigger primitives.")
-options.register("mc", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("mc", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when running on MC.")
 options.register("dqm", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True when you want to run the CSC DQM")
@@ -115,12 +115,15 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 if options.mc:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
       if options.run3:
-            process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2022_realistic', '')
+            # process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2022_realistic', '')
+            # process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun4_realistic_v4', '')
+            process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_mc_FULL', '')
 else:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
       if options.run3:
             #process.GlobalTag = GlobalTag(process.GlobalTag, '112X_dataRun3_Prompt_v5', '')
-            process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_HLT_v3', '')
+            # process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_HLT_v3', '')
+            process.GlobalTag = GlobalTag(process.GlobalTag, '150X_dataRun3_Prompt_v1', '')
 
 ## running on unpacked data, or after running the unpacker
 if not options.mc or options.unpack:
@@ -375,7 +378,7 @@ process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
         alignment = cms.bool(True),
         debug = cms.bool(False),
 )
-process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
+# process.p7 = cms.EndPath(process.GEMCSCTriggerTester)
 
 #process.schedule.extend([process.p7])
 
@@ -387,23 +390,57 @@ process.CSCEmulatorReader = cms.EDAnalyzer('CSCEmulatorReader',
         debug = cms.bool(False),
 )
 
-process.p8 = cms.EndPath(process.CSCEmulatorReader)
+# process.p8 = cms.EndPath(process.CSCEmulatorReader)
 
 #process.schedule.extend([process.p8])
 
 
-process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester', 
+# process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTester', 
+# 	process.MuonServiceProxy,
+#         l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
+#         emtf_muon_token = cms.InputTag("gmtStage2Digis", "EMTF"),
+#         emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
+#         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
+#         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
+#         muon_token = cms.InputTag("muons"),
+#         vertexCollection_token = cms.InputTag("offlinePrimaryVertices"),
+#         #luts_folder = cms.string("../luts"), #For local running
+#         luts_folder = cms.string("luts"), #For crab running
+#         alignment = cms.bool(True),
+#         debug = cms.bool(False),
+# )
+
+
+# process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTesterEmulator', 
+# 	process.MuonServiceProxy,
+#         l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
+#         emtf_muon_token = cms.InputTag("gmtStage2Digis", "EMTF"),
+#         emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
+#         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
+#         lctEmuTag = cms.InputTag("cscTriggerPrimitiveDigis"),
+#         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
+#         muon_token = cms.InputTag("muons"),
+#         vertexCollection_token = cms.InputTag("offlinePrimaryVertices"),
+#         #luts_folder = cms.string("../luts"), #For local running
+#         luts_folder = cms.string("luts"), #For crab running
+#         alignment = cms.bool(True),
+#         debug = cms.bool(True),
+# )
+
+# MC Version
+process.GEMCSCBendingAngleTester = cms.EDAnalyzer('GEMCSCBendingAngleTesterEmulator', 
 	process.MuonServiceProxy,
         l1_muon_token = cms.InputTag("gmtStage2Digis", "Muon"),
-        emtf_muon_token = cms.InputTag("gmtStage2Digis", "EMTF"),
-        emtf_track_token = cms.InputTag("emtfStage2Digis", "", "L1CSCTPG"),
+        emtf_muon_token = cms.InputTag("simEmtfDigis", "EMTF"),
+        emtf_track_token = cms.InputTag("simEmtfDigis", "", ""),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
+        lctEmuTag = cms.InputTag("cscTriggerPrimitiveDigis"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),
-        muon_token = cms.InputTag("muons"),
+        muon_token = cms.InputTag("slimmedMuons"),
         vertexCollection_token = cms.InputTag("offlinePrimaryVertices"),
-        #luts_folder = cms.string("../luts"), #For local running
+      #   luts_folder = cms.string("../luts"), #For local running
         luts_folder = cms.string("luts"), #For crab running
-        alignment = cms.bool(True),
+        alignment = cms.bool(False),
         debug = cms.bool(False),
 )
 

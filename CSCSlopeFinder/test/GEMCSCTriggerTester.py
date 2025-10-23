@@ -27,9 +27,9 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
 options.register ('nEvents',
-			-1, #Max number of events 
-			VarParsing.multiplicity.singleton, 
-			VarParsing.varType.int, 
+			-1, #Max number of events
+			VarParsing.multiplicity.singleton,
+			VarParsing.varType.int,
 			"Number of events")
 options.parseArguments()
 
@@ -39,11 +39,11 @@ process.maxEvents = cms.untracked.PSet(
 process.maxEvents.input = cms.untracked.int32(-1)
 
 
-process.source = cms.Source("PoolSource", 
-				fileNames = cms.untracked.vstring(options.inputFiles), 
+process.source = cms.Source("PoolSource",
+				fileNames = cms.untracked.vstring(options.inputFiles),
 				inputCommands = cms.untracked.vstring(
-			"keep *", 
-			"drop TotemTimingDigiedmDetSetVector_totemTimingRawToDigi_TotemTiming_reRECO", 
+			"keep *",
+			"drop TotemTimingDigiedmDetSetVector_totemTimingRawToDigi_TotemTiming_reRECO",
 			"drop TotemTimingRecHitedmDetSetVector_totemTimingRecHits__reRECO"
 			)
 				)
@@ -52,14 +52,14 @@ outfile = "out_LCT_test.root"
 process.source.fileNames.append("file:lcts2.root")
 
 process.options = cms.untracked.PSet(
-                        SkipEvent = cms.untracked.vstring('ProductNotFound')
+                        TryToContinue = cms.untracked.vstring('ProductNotFound')
                         )
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string(outfile)) #variable name set above
 
-process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester', 
+process.GEMCSCTriggerTester = cms.EDAnalyzer('GEMCSCTriggerTester',
 	process.MuonServiceProxy,
-	gemRecHits = cms.InputTag("gemRecHits"), 
+	gemRecHits = cms.InputTag("gemRecHits"),
         muons = cms.InputTag("muons"),
         corrlctDigiTag = cms.InputTag("muonCSCDigis", "MuonCSCCorrelatedLCTDigi"),
         gemPadDigiCluster = cms.InputTag("muonCSCDigis", "MuonGEMPadDigiCluster"),

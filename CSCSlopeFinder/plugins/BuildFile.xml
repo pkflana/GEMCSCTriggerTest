@@ -31,4 +31,4 @@
 <use name="CondFormats/Alignment"/>
 <use name="CondFormats/AlignmentRecord"/>
 <use name="Geometry/DTGeometry"/>
-<flags EDM_PLUGIN="1"/>
+<!-- <flags EDM_PLUGIN="1"/> -->
