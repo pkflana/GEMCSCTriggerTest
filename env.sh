@@ -9,10 +9,12 @@ apply_cmssw_customization_steps() {
     run_cmd git cms-addpkg DataFormats/L1TMuon
     run_cmd git cms-addpkg EventFilter/CSCRawToDigi
     run_cmd git cms-addpkg L1Trigger/CSCTriggerPrimitives
-    # run_cmd git remote add valeria git@github.com:valeriadamante/cmssw.git # comment if you are valeria and you want to work from the branch emtf_data_format
-    # run_cmd git fetch valeria  # comment if you are valeria and you want to work from the branch emtf_data_format
-    # run_cmd git pull valeria emtf_data_format  # comment if you are valeria and you want to work from the branch emtf_data_format
-    run_cmd git checkout emtf_data_format # uncomment if you are Valeria
+    # run_cmd git checkout -b emtf_data_format_dev # uncomment if you want to create a new branch (make sure it does not exist yet) to avoid overwriting stuff
+    # run_cmd git remote add valeria git@github.com:valeriadamante/cmssw.git # uncomment if you are not valeria and you want to work from the branch emtf_data_format
+    # run_cmd git fetch valeria  # uncomment if you are not valeria and you want to work from the branch emtf_data_format
+    # run_cmd git pull valeria emtf_data_format  #  uncomment if you are not valeria and you want to work from the branch emtf_data_format
+
+    run_cmd git checkout emtf_data_format # uncomment if you are Valeria and you want to work from the branch emtf_data_format
 
     run_cmd mkdir GEMCSCTriggerTest
     run_cmd ln -s "$ANALYSIS_PATH/CSCSlopeFinder" GEMCSCTriggerTest/CSCSlopeFinder
@@ -21,7 +23,8 @@ apply_cmssw_customization_steps() {
 
 
 
-CMSSW_VERSION="CMSSW_15_1_0"
+CMSSW_VERSION="CMSSW_16_0_0_pre1"
+
 
 action() {
     local this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
